@@ -1,4 +1,4 @@
-// Log weight entry endpoint
+// Log weight entry endpoint with metric/imperial support
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
@@ -16,6 +16,8 @@ import {
     formatDate,
     roundToDecimal,
 } from '@/lib/utils';
+import { parseWeight } from '@/lib/conversions';
+import type { UnitPreference } from '@/lib/conversions';
 
 export async function POST(request: NextRequest) {
     try {
@@ -24,15 +26,24 @@ export async function POST(request: NextRequest) {
         const user = await getCurrentUser();
 
         const body = await request.json();
-        const { weight_kg, measured_body_fat_pct, notes, date } = body;
+        const { weight, measured_body_fat_pct, notes, date } = body;
+
+        // get user profile to check unit preference
+        const userProfile = await getUserProfile(user.id);
 
         // validate required fields
-        if (!weight_kg) {
+        if (!weight) {
             return NextResponse.json(
                 createResponse(false, null, 'Weight is required'),
                 { status: 400 }
             );
         }
+
+        // convert weight to metric based on user's unit preference
+        const weight_kg = parseWeight(
+            weight,
+            userProfile.preferred_unit as UnitPreference
+        );
 
         // validate weight
         const weightValidation = validateWeight(weight_kg);
@@ -72,9 +83,6 @@ export async function POST(request: NextRequest) {
             validBodyFat = measured_body_fat_pct;
         }
 
-        // get user profile
-        const userProfile = await getUserProfile(user.id);
-
         // calculate targets with new weight
         const updatedTargets = calculateAllTargets(
             weight_kg,
@@ -89,8 +97,8 @@ export async function POST(request: NextRequest) {
             userProfile.custom_carb_ratio
         );
 
-        // Calculate estimated body fat if not measured
-        let calculatedBodyFat = null
+        // calculate estimated body fat if not measured
+        let calculatedBodyFat = null;
 
         if (!validBodyFat) {
 
@@ -110,7 +118,7 @@ export async function POST(request: NextRequest) {
                     lastEntry.weight_kg,
                     weight_kg,
                     userProfile.current_goal
-                )
+                );
             } else if (userProfile.measured_body_fat_pct) {
 
                 // use initial measured body fat if available
@@ -123,21 +131,21 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // insert weight entry
+        // insert weight entry (always stored in metric)
         const { data: entry, error: insertError } = await supabase
-          .from('weight_entries')
-          .insert([
-              {
-                  user_id: user.id,
-                  date: date || formatDate(new Date()),
-                  weight_kg,
-                  measured_body_fat_pct: validBodyFat,
-                  calculated_body_fat_pct: calculatedBodyFat,
-                  notes: notes || null,
-              },
-          ])
-          .select()
-          .single();
+            .from('weight_entries')
+            .insert([
+                {
+                    user_id: user.id,
+                    date: date || formatDate(new Date()),
+                    weight_kg,
+                    measured_body_fat_pct: validBodyFat,
+                    calculated_body_fat_pct: calculatedBodyFat,
+                    notes: notes || null,
+                },
+            ])
+            .select()
+            .single();
 
         if (insertError) {
             console.error('Insert error:', insertError);

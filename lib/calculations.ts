@@ -1,9 +1,9 @@
 // Calculation utilities
 
-export type ActivityLevel = 'Sedentary' | 'Lightly Active' | 'Moderately Active' | 'Very Active' | 'Extremely Active'
-export type Goal = 'Fat Loss' | 'Muscle Gain'
-export type Intensity = 'Slow' | 'Moderate' | 'Aggressive' | 'Extreme' | 'Insane'
-export type Sex = 'M' | 'F'
+export type ActivityLevel = 'Sedentary' | 'Lightly Active' | 'Moderately Active' | 'Very Active' | 'Extremely Active';
+export type Goal = 'Fat Loss' | 'Muscle Gain';
+export type Intensity = 'Slow' | 'Moderate' | 'Aggressive' | 'Extreme' | 'Insane';
+export type Sex = 'M' | 'F';
 
 // activity multiplier mappings
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {

@@ -1,6 +1,6 @@
 // Utility functions
 
-import { supabase } from './supabase'
+import { supabase } from './supabase';
 
 /**
  * Get current authenticated user

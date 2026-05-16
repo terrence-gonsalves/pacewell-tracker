@@ -147,6 +147,8 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (userError) {
+            console.error('Supabase insert error:', userError);
+            console.log('Supabase insert error:', userError);
 
             // clean up auth user if profile creation fails
             await supabase.auth.admin.deleteUser(userId);

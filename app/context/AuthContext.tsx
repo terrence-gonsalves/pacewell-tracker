@@ -44,11 +44,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const response = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, biometrics }),
+                body: JSON.stringify({ email, password, ...biometrics }),
             });
 
             if (!response.ok) {
                 const data = await response.json();
+                console.log('Signup error details:', data);
 
                 throw new Error(data.error || 'Signup failed');
             }

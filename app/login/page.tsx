@@ -19,6 +19,7 @@ export default function LoginPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
+
         setFormData(prev => ({ ...prev, [name]: value }));
         setError('');
     };
@@ -26,16 +27,19 @@ export default function LoginPage() {
     const validateForm = () => {
         if (!formData.email) {
             setError('Email is required');
+
             return false;
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             setError('Please enter a valid email');
+
             return false;
         }
 
         if (!formData.password) {
             setError('Password is required');
+
             return false;
         }
 
@@ -52,14 +56,14 @@ export default function LoginPage() {
         try {
             await login(formData.email, formData.password);
 
-            // Store remember me preference if checked
+            // store remember me preference if checked
             if (rememberMe) {
                 localStorage.setItem('pacewell_remember_email', formData.email);
             } else {
                 localStorage.removeItem('pacewell_remember_email');
             }
 
-            // Redirect to dashboard
+            // redirect to dashboard
             router.push('/dashboard');
         } catch (err: any) {
             setError(err.message || 'Login failed. Please try again.');

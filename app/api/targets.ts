@@ -1,5 +1,3 @@
-// Get user's current targets endpoint
-
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { calculateAllTargets } from '@/lib/calculations';

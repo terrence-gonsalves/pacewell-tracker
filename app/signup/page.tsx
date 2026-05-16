@@ -1,5 +1,3 @@
-// User registration form with unit preference and biometrics
-
 "use client";
 
 import { useState } from 'react';

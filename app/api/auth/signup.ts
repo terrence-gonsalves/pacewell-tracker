@@ -1,5 +1,3 @@
-// User account creation endpoint with metric/imperial support
-
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { calculateAllTargets } from '@/lib/calculations';

@@ -1,5 +1,3 @@
-// Log weight entry endpoint with metric/imperial support
-
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import {

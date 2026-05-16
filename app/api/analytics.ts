@@ -1,5 +1,3 @@
-// Get analytics and weekly summaries endpoint
-
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import {

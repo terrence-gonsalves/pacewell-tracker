@@ -139,7 +139,7 @@ export default function SignupPage() {
             await signup(formData.email, formData.password, biometrics);
 
             // redirect to email verification
-            router.push('/verify-email');
+            router.push('/login');
         } catch (err: any) {
             setError(err.message || 'Signup failed. Please try again.');
         }

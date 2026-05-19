@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { calculateAllTargets } from '@/lib/calculations';
 import { createResponse, validateWeight, validateDate } from '@/lib/utils';
 import { parseWeight, parseHeight } from '@/lib/conversions';
@@ -123,8 +123,8 @@ export async function POST(request: NextRequest) {
             current_intensity as 'Slow' | 'Moderate' | 'Aggressive' | 'Extreme' | 'Insane'
         );
 
-        // create user profile in database
-        const { data: userData, error: userError } = await supabase
+        // create user profile in database using service role (bypasses RLS)
+        const { data: userData, error: userError } = await supabaseAdmin
             .from('users')
             .insert([
                 {
@@ -148,10 +148,9 @@ export async function POST(request: NextRequest) {
 
         if (userError) {
             console.error('Supabase insert error:', userError);
-            console.log('Supabase insert error:', userError);
 
             // clean up auth user if profile creation fails
-            await supabase.auth.admin.deleteUser(userId);
+            await supabaseAdmin.auth.admin.deleteUser(userId);
 
             return NextResponse.json(
                 createResponse(false, null, 'Failed to create user profile'),

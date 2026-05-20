@@ -99,10 +99,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const data = await response.json();
 
             // store user data and token
-            localStorage.setItem('pacewell_token', data.token);
-            localStorage.setItem('pacewell_user', JSON.stringify(data.user));
+            localStorage.setItem('pacewell_token', data.body.data.session.access_token);
+            localStorage.setItem('pacewell_user', JSON.stringify(data.body.data.user));
 
-            setUser(data.user);
+            setUser(data.body.data.user);
         } finally {
             setIsLoading(false);
         }

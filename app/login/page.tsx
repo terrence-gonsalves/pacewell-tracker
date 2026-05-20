@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import Link from 'next/link';
 
 export default function LoginPage() {
     const router = useRouter();
-    const { login, isLoading } = useAuth();
+    const searchParams = useSearchParams();
+    const { login, isLoading, user } = useAuth();
 
     const [formData, setFormData] = useState({
         email: '',
@@ -15,7 +16,23 @@ export default function LoginPage() {
     });
 
     const [error, setError] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
+    const [message, setMessage] = useState('');
+
+    // get message from query params (e.g., after signup)
+    useEffect(() => {
+        const msg = searchParams.get('message');
+
+        if (msg) {
+            setMessage(decodeURIComponent(msg));
+        }
+    }, [searchParams]);
+
+    // if user is already logged in, redirect to dashboard
+    useEffect(() => {
+        if (user && !isLoading) {
+            router.push('/dashboard');
+        }
+    }, [user, isLoading, router]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -56,15 +73,7 @@ export default function LoginPage() {
         try {
             await login(formData.email, formData.password);
 
-            // store remember me preference if checked
-            if (rememberMe) {
-                localStorage.setItem('pacewell_remember_email', formData.email);
-            } else {
-                localStorage.removeItem('pacewell_remember_email');
-            }
-
-            // redirect to dashboard
-            router.push('/dashboard');
+            // redirect happens automatically via useEffect when user is set
         } catch (err: any) {
             setError(err.message || 'Login failed. Please try again.');
         }
@@ -77,6 +86,12 @@ export default function LoginPage() {
                     <h1 className="text-3xl font-bold text-pacewell-dark mb-2">Pacewell Tracker</h1>
                     <p className="text-gray-600">Sign in to your account</p>
                 </div>
+
+                {message && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-700 text-sm">
+                        {message}
+                    </div>
+                )}
 
                 {error && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
@@ -113,21 +128,6 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={rememberMe}
-                                onChange={(e) => setRememberMe(e.target.checked)}
-                                className="w-4 h-4 border-gray-300 rounded focus:ring-pacewell-dark text-pacewell-dark"
-                            />
-                            <span className="ml-2 text-sm text-gray-600">Remember me</span>
-                        </label>
-                        <Link href="/forgot-password" className="text-sm text-pacewell-dark hover:text-pacewell-darker font-semibold">
-                            Forgot password?
-                        </Link>
-                    </div>
-
                     <button
                         type="submit"
                         disabled={isLoading}
@@ -141,7 +141,7 @@ export default function LoginPage() {
                     <p className="text-gray-600">
                         Don't have an account?{' '}
                         <Link href="/signup" className="text-pacewell-dark hover:text-pacewell-darker font-semibold">
-                            Create one
+                            Sign up
                         </Link>
                     </p>
                 </div>

@@ -8,11 +8,9 @@ import Link from 'next/link';
 export default function SignupPage() {
     const router = useRouter();
     const { signup, isLoading } = useAuth();
-
     const [unitPreference, setUnitPreference] = useState<'metric' | 'imperial'>('metric');
     const [error, setError] = useState('');
-    const [step, setStep] = useState(1); // step 1: Email/Password, step 2: Biometrics, step 3: Optional
-
+    const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -110,7 +108,6 @@ export default function SignupPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
         setError('');
 
         try {
@@ -138,8 +135,10 @@ export default function SignupPage() {
 
             await signup(formData.email, formData.password, biometrics);
 
-            // redirect to email verification
-            router.push('/login');
+            // redirect to login with message
+            const message = encodeURIComponent('Account created! Check your email to verify your account, then log in.');
+            
+            router.push(`/login?message=${message}`);
         } catch (err: any) {
             setError(err.message || 'Signup failed. Please try again.');
         }
@@ -150,7 +149,7 @@ export default function SignupPage() {
             <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-pacewell-dark mb-2">Pacewell Tracker</h1>
-                    <p className="text-gray-600">Create your account and start tracking</p>
+                    <p className="text-gray-600">Create your account</p>
                 </div>
 
                 {error && (
@@ -371,7 +370,7 @@ export default function SignupPage() {
                 {step === 3 && (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <p className="text-sm text-gray-600 mb-4">
-                            Optional: Set your body composition and intensity goals
+                            Optional: Set your body composition and fitness goals
                         </p>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -385,7 +384,7 @@ export default function SignupPage() {
                                     name="measured_body_fat_pct"
                                     value={formData.measured_body_fat_pct}
                                     onChange={handleInputChange}
-                                    placeholder="e.g., 25"
+                                    placeholder="e.g., 23.9"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
                                 />
                             </div>
@@ -399,7 +398,7 @@ export default function SignupPage() {
                                     name="target_body_fat_pct"
                                     value={formData.target_body_fat_pct}
                                     onChange={handleInputChange}
-                                    placeholder="e.g., 15"
+                                    placeholder="e.g., 12"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
                                 />
                             </div>
@@ -458,14 +457,14 @@ export default function SignupPage() {
                 )}
 
                 <div className="mt-6 text-center">
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 text-sm">
                         Already have an account?{' '}
                         <Link href="/login" className="text-pacewell-dark hover:text-pacewell-darker font-semibold">
-                            Login
+                            Sign in
                         </Link>
                     </p>
                 </div>
             </div>
         </div>
-    )
+    );
 }

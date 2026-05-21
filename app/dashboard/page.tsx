@@ -3,250 +3,454 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
-import StatCard from '../components/StatCard';
+import Sidebar from '../components/Sidebar';
 import { useRouter } from 'next/navigation';
+import {
+    LineChart,
+    Line,
+    PieChart,
+    Pie,
+    Cell,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+} from 'recharts';
 
-// mock data - will be replaced with real API data later
+// mock data
 const mockDashboardData = {
     user: {
-        id: '244ea06e-ac5e-458e-bb18-46b78ea5de44',
         email: 'terrence.a.gonsalves@proton.me',
-        preferred_unit: 'metric' as const,
-    },
-    profile: {
-        weight_kg: 90.35,
-        height_cm: 191,
-        age: 53,
-        sex: 'M',
-        activity_multiplier: 'Moderately Active',
+        firstName: 'Marcus',
     },
     targets: {
-        daily_calories: 2150,
-        protein_g: 181,
-        carbs_g: 239,
-        fat_g: 72,
+        daily_calories: 2400,
+        protein_g: 180,
+        carbs_g: 250,
+        fat_g: 70,
     },
     today: {
         macros_consumed: {
-            calories: 1450,
-            protein_g: 125,
-            carbs_g: 160,
-            fat_g: 42,
+            calories: 1860,
+            protein_g: 142,
+            carbs_g: 210,
+            fat_g: 52,
         },
         meals_logged: 3,
         weight_logged: true,
-        body_fat_logged: false,
+        body_fat_logged: true,
     },
     stats: {
-        current_weight: 90.35,
-        current_body_fat_pct: 23.9,
+        current_weight: 81.5,
+        current_body_fat_pct: 14.2,
         target_body_fat_pct: 12.0,
-        remaining_calories: 700,
-        estimated_goal_date: '2026-09-15',
-        progress_to_goal: 45,
+        lean_body_mass: 69.8,
+        fat_mass: 11.7,
+        target_weight: 78.0,
+        weight_change: -0.3,
+        weight_change_monthly: 0.2,
+        estimated_goal_date: '2026-10-24',
+        progress_to_goal: 50,
     },
 };
 
-interface DashboardStats {
-    current_weight: number;
-    current_body_fat_pct: number;
-    target_body_fat_pct: number;
-    remaining_calories: number;
-    estimated_goal_date: string;
-    progress_to_goal: number;
-    target_weight?: number;
-    lean_body_mass?: number;
-    fat_mass?: number;
-    weight_to_lose?: number;
-}
+// weight trend data (7 days)
+const weightTrendData = [
+    { date: 'Tue', weight: 82.1 },
+    { date: 'Wed', weight: 81.9 },
+    { date: 'Thu', weight: 81.7 },
+    { date: 'Fri', weight: 81.6 },
+    { date: 'Sat', weight: 81.5 },
+    { date: 'Sun', weight: 81.4 },
+    { date: 'Mon', weight: 81.5 },
+];
+
+// macro breakdown data
+const macroData = [
+    { name: 'Protein', value: 142, target: 180, fill: '#2D6A4F' },
+    { name: 'Carbs', value: 210, target: 250, fill: '#40916C' },
+    { name: 'Fats', value: 52, target: 70, fill: '#95D5B2' },
+];
+
+const COLORS = ['#2D6A4F', '#40916C', '#95D5B2'];
 
 export default function DashboardPage() {
     const router = useRouter();
     const { user, logout } = useAuth();
-    const [unitPreference] = useState<'metric' | 'imperial'>('metric');
+    const data = mockDashboardData;
 
     const handleLogout = () => {
         logout();
         router.push('/login');
     };
 
-    // calculate derived metrics
-    const stats = mockDashboardData.stats as DashboardStats;
-    const profile = mockDashboardData.profile;
-    const targets = mockDashboardData.targets;
-    const today = mockDashboardData.today;
-
-    // calculate body composition
-    const currentWeight = stats.current_weight;
-    const currentBodyFat = stats.current_body_fat_pct / 100; // convert to decimal
-    const fatMass = currentWeight * currentBodyFat;
-    const leanBodyMass = currentWeight - fatMass;
-
-    // calculate weight to lose
-    const targetBodyFat = stats.target_body_fat_pct / 100; // convert to decimal
-    const targetWeight = leanBodyMass / (1 - targetBodyFat);
-    const weightToLose = currentWeight - targetWeight;
-
-    // format weight display based on unit preference
-    const formatWeight = (kg: number) => {
-        if (unitPreference === 'imperial') {
-            return (kg * 2.20462).toFixed(1);
-        }
-
-        return kg.toFixed(1);
-    };
-
-    const weightUnit = unitPreference === 'metric' ? 'kg' : 'lbs';
+    const caloriesRemaining = data.targets.daily_calories - data.today.macros_consumed.calories;
+    const daysRemaining = Math.ceil((new Date(data.stats.estimated_goal_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
     return (
         <ProtectedRoute>
-            <div className="min-h-screen bg-gradient-to-br from-pacewell-dark to-pacewell-darker">
-                <header className="bg-pacewell-dark shadow-lg">
-                    <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-                        <div>
-                            <h1 className="text-white text-3xl font-bold">Pacewell Tracker</h1>
-                            <p className="text-gray-300 text-sm">v0.4.0-alpha</p>
-                        </div>
-                        <div className="flex items-center gap-6">
-                            <div className="text-right">
-                                <p className="text-white font-semibold">{user?.email?.split('@')[0]}</p>
-                                <p className="text-gray-300 text-sm">{user?.email}</p>
-                            </div>
-                            <button
-                                onClick={handleLogout}
-                                className="bg-white text-pacewell-dark px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </header>
+            <div className="flex min-h-screen bg-gray-50">
+                <Sidebar />
                 
-                <main className="max-w-7xl mx-auto px-4 py-8">
-                    <div className="mb-12">
-                        <h2 className="text-white text-4xl font-bold mb-2">
-                            Welcome, {user?.email?.split('@')[0]}
-                        </h2>
-                        <p className="text-gray-300 text-lg">
-                            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                        </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                        <StatCard
-                            label="Current Weight"
-                            value={formatWeight(stats.current_weight)}
-                            unit={weightUnit}
-                            icon="⚖️"
-                            accentColor="text-blue-500"
-                        />
-                        
-                        <StatCard
-                            label="Remaining Calories"
-                            value={Math.max(0, stats.remaining_calories)}
-                            unit="kcal"
-                            icon="🔥"
-                            accentColor="text-orange-500"
-                        />
-                        
-                        <StatCard
-                            label="Protein Consumed"
-                            value={today.macros_consumed.protein_g}
-                            unit={`/ ${targets.protein_g}g`}
-                            icon="🥚"
-                            accentColor="text-red-500"
-                        />
-                        
-                        <StatCard
-                            label="Carbs Consumed"
-                            value={today.macros_consumed.carbs_g}
-                            unit={`/ ${targets.carbs_g}g`}
-                            icon="🌾"
-                            accentColor="text-yellow-500"
-                        />
-                        
-                        <StatCard
-                            label="Fat Consumed"
-                            value={today.macros_consumed.fat_g}
-                            unit={`/ ${targets.fat_g}g`}
-                            icon="🥑"
-                            accentColor="text-green-500"
-                        />
-                        
-                        <StatCard
-                            label="Current Body Fat"
-                            value={stats.current_body_fat_pct}
-                            unit={`/ ${stats.target_body_fat_pct}%`}
-                            icon="📊"
-                            accentColor="text-purple-500"
-                        />
-                        
-                        <StatCard
-                            label="Lean Body Mass"
-                            value={formatWeight(leanBodyMass)}
-                            unit={weightUnit}
-                            icon="💪"
-                            accentColor="text-green-600"
-                        />
-                        
-                        <StatCard
-                            label="Fat Mass"
-                            value={formatWeight(fatMass)}
-                            unit={weightUnit}
-                            icon="📈"
-                            accentColor="text-pink-500"
-                        />
-                        
-                        <StatCard
-                            label="Target Weight"
-                            value={formatWeight(targetWeight)}
-                            unit={weightUnit}
-                            icon="🎯"
-                            accentColor="text-blue-600"
-                        />
-                        
-                        <StatCard
-                            label="Weight to Lose"
-                            value={formatWeight(weightToLose)}
-                            unit={weightUnit}
-                            icon="📉"
-                            accentColor="text-indigo-500"
-                        />
-                        
-                        <StatCard
-                            label="Estimated Goal Date"
-                            value={new Date(stats.estimated_goal_date).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                            })}
-                            unit=""
-                            icon="📅"
-                            accentColor="text-teal-500"
-                        />
-
-                        <StatCard
-                            label="Progress to Goal"
-                            value={Math.min(100, Math.max(0, stats.progress_to_goal))}
-                            unit="%"
-                            icon="✨"
-                            accentColor="text-amber-500"
-                        />
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <h3 className="text-2xl font-bold text-pacewell-dark mb-6">Log Your Data</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <button className="bg-pacewell-dark hover:bg-pacewell-darker text-white font-semibold py-3 rounded-lg transition">
-                                📝 Log Weight
-                            </button>
-                            <button className="bg-pacewell-dark hover:bg-pacewell-darker text-white font-semibold py-3 rounded-lg transition">
-                                🍽️ Log Meal
-                            </button>
-                            <button className="bg-pacewell-dark hover:bg-pacewell-darker text-white font-semibold py-3 rounded-lg transition">
-                                📊 Log Body Fat
-                            </button>
+                <main className="ml-56 flex-1">
+                    <header className="bg-white shadow-sm border-b border-gray-200">
+                        <div className="px-8 py-6 flex justify-between items-center">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900">
+                                    Good morning, {data.user.firstName}
+                                </h1>
+                                <p className="text-gray-600 mt-1">
+                                    You're {caloriesRemaining} kcal under your limit today. Keep it up!
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                                    <span>📊</span>
+                                    <span>Weekly Report</span>
+                                </button>
+                                <button className="flex items-center gap-2 px-4 py-2 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold">
+                                    <span>➕</span>
+                                    <span>Log Meal</span>
+                                </button>
+                            </div>
                         </div>
+                    </header>
+                    
+                    <div className="p-8">
+                        <section className="mb-8">
+                            <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-6">
+                                Daily Nutrition Summary
+                            </h2>
+                            <div className="bg-white rounded-lg shadow p-8 grid grid-cols-3 gap-8">
+                                <div className="flex flex-col items-center">
+                                    <div className="relative w-48 h-48 mb-4">
+                                        <svg className="w-full h-full" viewBox="0 0 200 200">
+                                            <circle
+                                                cx="100"
+                                                cy="100"
+                                                r="90"
+                                                fill="none"
+                                                stroke="#E5E7EB"
+                                                strokeWidth="12"
+                                            />
+                                            
+                                            <circle
+                                                cx="100"
+                                                cy="100"
+                                                r="90"
+                                                fill="none"
+                                                stroke="#2D6A4F"
+                                                strokeWidth="12"
+                                                strokeDasharray={`${(data.today.macros_consumed.calories / data.targets.daily_calories) * 565.48} 565.48`}
+                                                strokeLinecap="round"
+                                                style={{ transform: 'rotate(-90deg)', transformOrigin: '100px 100px' }}
+                                            />
+                                            
+                                            <text
+                                                x="100"
+                                                y="85"
+                                                textAnchor="middle"
+                                                className="text-4xl font-bold"
+                                                fill="#2D6A4F"
+                                            >
+                                                {data.today.macros_consumed.calories}
+                                            </text>
+                                            <text
+                                                x="100"
+                                                y="110"
+                                                textAnchor="middle"
+                                                className="text-sm"
+                                                fill="#6B7280"
+                                            >
+                                                CONSUMED
+                                            </text>
+                                        </svg>
+                                    </div>
+                                    <p className="text-center text-gray-600">
+                                        <span className="text-2xl font-bold text-gray-900">{caloriesRemaining}</span>
+                                        <span className="text-gray-600"> Remaining</span>
+                                    </p>
+                                </div>
+                                
+                                <div className="flex flex-col items-center justify-center">
+                                    <div className="mb-6">
+                                        <ResponsiveContainer width={200} height={150}>
+                                            <PieChart>
+                                                <Pie
+                                                    data={macroData}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={45}
+                                                    outerRadius={75}
+                                                    paddingAngle={2}
+                                                    dataKey="value"
+                                                >
+                                                    {COLORS.map((color, index) => (
+                                                        <Cell key={`cell-${index}`} fill={color} />
+                                                    ))}
+                                                </Pie>
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <p className="text-center text-sm font-semibold text-gray-700 mb-3">
+                                        Macro Breakdown
+                                    </p>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 bg-pacewell-dark rounded"></div>
+                                            <span className="text-gray-600">Protein</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 bg-green-500 rounded"></div>
+                                            <span className="text-gray-600">Carbs</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 bg-green-200 rounded"></div>
+                                            <span className="text-gray-600">Fats</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col justify-center space-y-6">
+                                    <div>
+                                        <div className="flex justify-between mb-2">
+                                            <span className="font-semibold text-gray-900">Protein</span>
+                                            <span className="text-gray-600">{data.today.macros_consumed.protein_g}g / {data.targets.protein_g}g</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className="bg-pacewell-dark h-2 rounded-full"
+                                                style={{ width: `${(data.today.macros_consumed.protein_g / data.targets.protein_g) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between mb-2">
+                                            <span className="font-semibold text-gray-900">Carbohydrates</span>
+                                            <span className="text-gray-600">{data.today.macros_consumed.carbs_g}g / {data.targets.carbs_g}g</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className="bg-green-500 h-2 rounded-full"
+                                                style={{ width: `${(data.today.macros_consumed.carbs_g / data.targets.carbs_g) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="flex justify-between mb-2">
+                                            <span className="font-semibold text-gray-900">Fats</span>
+                                            <span className="text-gray-600">{data.today.macros_consumed.fat_g}g / {data.targets.fat_g}g</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div
+                                                className="bg-green-200 h-2 rounded-full"
+                                                style={{ width: `${(data.today.macros_consumed.fat_g / data.targets.fat_g) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <div className="grid grid-cols-3 gap-8 mb-8">
+                            {/* Body Composition Overview */}
+                            <div className="col-span-2">
+                                <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-6">
+                                    Body Composition Overview
+                                </h2>
+                                <div className="bg-white rounded-lg shadow p-8">
+                                    <div className="grid grid-cols-3 gap-8 mb-8 pb-8 border-b border-gray-200">
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                                                Current Weight
+                                            </p>
+                                            <p className="text-3xl font-bold text-gray-900">{data.stats.current_weight} kg</p>
+                                            <p className="text-sm text-gray-600 mt-1">
+                                                {data.stats.weight_change > 0 ? '+' : ''}{data.stats.weight_change}kg since yesterday
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                                                Body Fat %
+                                            </p>
+                                            <p className="text-3xl font-bold text-pacewell-dark">{data.stats.current_body_fat_pct}%</p>
+                                            <p className="text-sm text-green-600 font-semibold mt-1">Status: Optimal</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                                                Lean Body Mass
+                                            </p>
+                                            <p className="text-3xl font-bold text-gray-900">{data.stats.lean_body_mass} kg</p>
+                                            <p className="text-sm text-gray-600 mt-1">
+                                                +{data.stats.weight_change_monthly}kg this month
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900 mb-4">Weight Trend</p>
+                                        <ResponsiveContainer width="100%" height={200}>
+                                            <LineChart data={weightTrendData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                                                <XAxis
+                                                    dataKey="date"
+                                                    stroke="#9CA3AF"
+                                                    style={{ fontSize: '12px' }}
+                                                />
+                                                <YAxis
+                                                    stroke="#9CA3AF"
+                                                    style={{ fontSize: '12px' }}
+                                                    domain={[80, 83]}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: '#fff',
+                                                        border: '1px solid #E5E7EB',
+                                                        borderRadius: '8px',
+                                                    }}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="weight"
+                                                    stroke="#2D6A4F"
+                                                    strokeWidth={3}
+                                                    dot={{ fill: '#2D6A4F', r: 4 }}
+                                                    isAnimationActive={true}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    
+                                    <div className="mt-8 pt-8 border-t border-gray-200">
+                                        <p className="text-sm font-semibold text-gray-900 mb-4">Mass Distribution</p>
+                                        <div className="flex gap-2">
+                                            <div className="flex-1 bg-pacewell-dark rounded-lg h-8 flex items-center px-3">
+                                                <span className="text-white text-sm font-semibold">
+                                                    Lean Mass ({data.stats.lean_body_mass}kg)
+                                                </span>
+                                            </div>
+                                            <div className="flex-none bg-gray-300 rounded-lg h-8 flex items-center px-3 text-center">
+                                                <span className="text-gray-700 text-sm font-semibold">
+                                                    Fat ({data.stats.fat_mass}kg)
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mt-2">Total: {data.stats.current_weight} kg</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-6">
+                                    Goals & Progress
+                                </h2>
+                                <div className="bg-white rounded-lg shadow p-8 space-y-6">
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-2">
+                                            Primary: Target Weight {data.stats.target_weight} kg
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex justify-between mb-2">
+                                            <span className="text-sm font-semibold text-gray-900">
+                                                {data.stats.current_weight} kg
+                                            </span>
+                                            <span className="text-sm font-semibold text-gray-900">
+                                                {data.stats.target_weight} kg
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-3">
+                                            <div
+                                                className="bg-pacewell-dark h-3 rounded-full transition-all"
+                                                style={{
+                                                    width: `${(
+                                                        ((data.stats.current_weight - data.stats.target_weight) /
+                                                            (data.stats.current_weight - data.stats.target_weight)) *
+                                                        100
+                                                    ).toFixed(0)}%`,
+                                                }}
+                                            ></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-100 rounded-lg p-3 text-center">
+                                        <p className="text-sm font-bold text-gray-900">
+                                            {data.stats.progress_to_goal}% OF GOAL REACHED
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4 border-t border-gray-200">
+                                        <div className="flex items-start gap-2">
+                                            <span className="text-xl">📅</span>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-600 uppercase">Est. Goal Date</p>
+                                                <p className="font-semibold text-gray-900">
+                                                    {new Date(data.stats.estimated_goal_date).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric',
+                                                    })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <span className="text-xl">⏱️</span>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-600 uppercase">Days Remaining</p>
+                                                <p className="font-semibold text-gray-900">{daysRemaining} Days</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-gray-200">
+                                        <p className="text-xs font-bold text-gray-600 uppercase mb-3">Projected Timeline</p>
+                                        <div className="flex gap-2">
+                                            {[...Array(5)].map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`flex-1 h-8 rounded ${
+                                                        i < 3 ? 'bg-pacewell-dark' : 'bg-gray-300'
+                                                    }`}
+                                                ></div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <section>
+                            <div className="grid grid-cols-4 gap-6">
+                                <div className="bg-white rounded-lg shadow p-6 text-center">
+                                    <p className="text-2xl mb-2">🍽️</p>
+                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Meals Logged Today</p>
+                                    <p className="text-2xl font-bold text-gray-900">{data.today.meals_logged}/5</p>
+                                    <p className="text-xs text-gray-600 mt-1">+1 vs yesterday</p>
+                                </div>
+                                <div className="bg-white rounded-lg shadow p-6 text-center">
+                                    <p className="text-2xl mb-2">⚖️</p>
+                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Weight Logged Today</p>
+                                    <p className="text-xl font-bold text-pacewell-dark">Logged</p>
+                                    <p className="text-xs text-gray-600 mt-1">Consistent</p>
+                                </div>
+                                <div className="bg-white rounded-lg shadow p-6 text-center">
+                                    <p className="text-2xl mb-2">📊</p>
+                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Body Fat Logged</p>
+                                    <p className="text-2xl font-bold text-gray-900">{data.stats.current_body_fat_pct}%</p>
+                                    <p className="text-xs text-gray-600 mt-1">Monthly Update</p>
+                                </div>
+                                <div className="bg-white rounded-lg shadow p-6 text-center">
+                                    <p className="text-2xl mb-2">🔥</p>
+                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Current Streak</p>
+                                    <p className="text-2xl font-bold text-gray-900">14</p>
+                                    <p className="text-xs text-gray-600 mt-1">Personal Best</p>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </main>
             </div>

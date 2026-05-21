@@ -112,7 +112,7 @@ export default function DashboardPage() {
                                     <span>Weekly Report</span>
                                 </button>
                                 <button className="flex items-center gap-2 px-4 py-2 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold">
-                                    <span>➕</span>
+                                    <span>+</span>
                                     <span>Log Meal</span>
                                 </button>
                             </div>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
                                             
                                             <text
                                                 x="100"
-                                                y="85"
+                                                y="100"
                                                 textAnchor="middle"
                                                 className="text-4xl font-bold"
                                                 fill="#2D6A4F"
@@ -160,12 +160,12 @@ export default function DashboardPage() {
                                             </text>
                                             <text
                                                 x="100"
-                                                y="110"
+                                                y="120"
                                                 textAnchor="middle"
                                                 className="text-sm"
                                                 fill="#6B7280"
                                             >
-                                                CONSUMED
+                                                CALORIES CONSUMED
                                             </text>
                                         </svg>
                                     </div>

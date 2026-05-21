@@ -2,7 +2,7 @@
 
 **Version: 0.4.0-alpha**
 
-A dynamic calorie tracking web application that adjusts daily calorie targets based on real-time weight changes. Pacewell Tracker helps users achieve their fitness goals with personalized macro targets and progress insights.
+A dynamic calorie tracking web application that adjusts calorie targets based on real-time weight changes. Pacewell Tracker helps users achieve their fitness goals with personalized macro targets and progress insights.
 
 ## Features
 

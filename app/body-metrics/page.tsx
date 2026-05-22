@@ -246,84 +246,85 @@ export default function BodyMetricsPage() {
                             <div className="space-y-6">
                                 <div className="bg-white rounded-lg shadow p-8">
                                     <h2 className="text-2xl font-bold text-pacewell-dark mb-6">30-Day Trend</h2>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={mockWeightData.trendData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis
-                                        dataKey="date"
-                                        tick={{ fontSize: 12 }}
-                                    />
-                                    <YAxis
-                                        domain={['dataMin - 1', 'dataMax + 1']}
-                                        tick={{ fontSize: 12 }}
-                                        label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
-                                    />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#f3f4f6', border: '1px solid #d1d5db' }}
-                                        formatter={(value) => [`${value} lbs`, 'Weight']}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="weight"
-                                        stroke="#2D6A4F"
-                                        dot={{ fill: '#2D6A4F', r: 5 }}
-                                        activeDot={{ r: 7 }}
-                                        strokeWidth={2}
-                                        name="Weight"
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
+                                    <ResponsiveContainer width="100%" height={300}>
+                                        <LineChart data={mockWeightData.trendData}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis
+                                                dataKey="date"
+                                                tick={{ fontSize: 12 }}
+                                            />
+                                            <YAxis
+                                                domain={['dataMin - 1', 'dataMax + 1']}
+                                                tick={{ fontSize: 12 }}
+                                                label={{ value: 'Weight (lbs)', angle: -90, position: 'insideLeft' }}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#f3f4f6', border: '1px solid #d1d5db' }}
+                                                formatter={(value) => [`${value} lbs`, 'Weight']}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="weight"
+                                                stroke="#2D6A4F"
+                                                dot={{ fill: '#2D6A4F', r: 5 }}
+                                                activeDot={{ r: 7 }}
+                                                strokeWidth={2}
+                                                name="Weight"
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
                                 </div>
                                 
-                                <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
-                                    <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <Scale size={20} className="text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Weight to Goal</h3>
-                                        <div className="text-2xl font-bold text-pacewell-dark">
-                                            {(mockWeightData.currentWeight - mockWeightData.goalWeight).toFixed(1)} {mockWeightData.unit}
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Scale size={20} className="text-white" />
                                         </div>
-                                        <p className="text-sm text-gray-600">Remaining to reach your goal</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
-                                    <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <TrendingUpIcon size={20} className="text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Avg. Weekly Loss</h3>
-                                        <div className="text-2xl font-bold text-green-600">
-                                            {(Math.abs(mockWeightData.thirtyDayChange) / 4).toFixed(1)} {mockWeightData.unit}
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Weight to Goal</h3>
+                                            <div className="text-2xl font-bold text-pacewell-dark">
+                                                {(mockWeightData.currentWeight - mockWeightData.goalWeight).toFixed(1)} {mockWeightData.unit}
+                                            </div>
+                                            <p className="text-sm text-gray-600">Remaining to reach your goal</p>
                                         </div>
-                                        <p className="text-sm text-gray-600">Based on 30-day trend</p>
                                     </div>
-                                </div>
-                                
-                                <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
-                                    <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <Calendar size={20} className="text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Projected Goal Date</h3>
-                                        <div className="text-lg font-bold text-pacewell-dark">
-                                            ~July 20, 2026
+                                    
+                                    <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <TrendingUpIcon size={20} className="text-white" />
                                         </div>
-                                        <p className="text-sm text-gray-600">At current pace</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
-                                    <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <CheckCircle size={20} className="text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Entries This Month</h3>
-                                        <div className="text-2xl font-bold text-blue-600">
-                                            {mockWeightData.recentEntries.length}
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Avg. Weekly Loss</h3>
+                                            <div className="text-2xl font-bold text-green-600">
+                                                {(Math.abs(mockWeightData.thirtyDayChange) / 4).toFixed(1)} {mockWeightData.unit}
+                                            </div>
+                                            <p className="text-sm text-gray-600">Based on 30-day trend</p>
                                         </div>
-                                        <p className="text-sm text-gray-600">Weight logs recorded</p>
+                                    </div>
+                                    
+                                    <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Calendar size={20} className="text-white" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Projected Goal Date</h3>
+                                            <div className="text-lg font-bold text-pacewell-dark">
+                                                ~July 20, 2026
+                                            </div>
+                                            <p className="text-sm text-gray-600">At current pace</p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white rounded-lg shadow p-6 flex gap-4 items-start">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <CheckCircle size={20} className="text-white" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Entries This Month</h3>
+                                            <div className="text-2xl font-bold text-blue-600">
+                                                {mockWeightData.recentEntries.length}
+                                            </div>
+                                            <p className="text-sm text-gray-600">Weight logs recorded</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

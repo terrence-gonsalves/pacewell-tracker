@@ -226,7 +226,6 @@ export default function MealsTrackerPage() {
                                             onClick={handleLogMeal}
                                             className="flex-1 px-6 py-3 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold flex items-center justify-center gap-2"
                                         >
-                                            <span>✓</span>
                                             <span>Confirm & Log Item</span>
                                         </button>
                                     </div>

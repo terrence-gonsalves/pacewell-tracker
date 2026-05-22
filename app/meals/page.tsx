@@ -16,6 +16,7 @@ import {
     Tooltip, 
     ResponsiveContainer 
 } from 'recharts';
+import { Search, Plus, Flame, Egg, Wheat, Droplet, Check, Star } from 'lucide-react';
 
 // mock data
 const mockMealsData = {
@@ -114,18 +115,20 @@ export default function MealsTrackerPage() {
                             <div className="col-span-2 space-y-8">
                                 <div className="flex gap-4">
                                     <button className="flex items-center gap-2 px-6 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium">
-                                        <span>🔍</span>
+                                        <Search size={20} />
                                         <span>Search Database</span>
                                     </button>
                                     <button className="flex items-center gap-2 px-6 py-2 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold">
-                                        <span>➕</span>
+                                        <Plus size={20} />
                                         <span>Custom Item</span>
                                     </button>
                                 </div>
                                 
                                 <div className="bg-white rounded-lg shadow p-8">
                                     <div className="flex items-center gap-2 mb-6">
-                                        <span className="text-2xl">➕</span>
+                                        <div className="w-6 h-6 bg-pacewell-dark rounded flex items-center justify-center">
+                                            <Plus size={16} className="text-white" />
+                                        </div>
                                         <h2 className="text-lg font-bold text-gray-900">Log New Entry</h2>
                                     </div>
                                     
@@ -161,8 +164,11 @@ export default function MealsTrackerPage() {
                                     
                                     <div className="grid grid-cols-4 gap-4 mb-6">
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                                <span className="text-orange-500">🔥</span> Calories
+                                            <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                                <div className="w-5 h-5 bg-orange-500 rounded flex items-center justify-center">
+                                                    <Flame size={14} className="text-white" />
+                                                </div>
+                                                Calories
                                             </label>
                                             <input
                                                 type="number"
@@ -175,8 +181,11 @@ export default function MealsTrackerPage() {
                                             <p className="text-xs text-gray-500 mt-1">kcal</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                                <span>🥚</span> Protein
+                                            <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                                <div className="w-5 h-5 bg-pacewell-dark rounded flex items-center justify-center">
+                                                    <Egg size={14} className="text-white" />
+                                                </div>
+                                                Protein
                                             </label>
                                             <input
                                                 type="number"
@@ -189,8 +198,11 @@ export default function MealsTrackerPage() {
                                             <p className="text-xs text-gray-500 mt-1">g</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                                <span>🌾</span> Carbs
+                                            <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                                <div className="w-5 h-5 bg-yellow-500 rounded flex items-center justify-center">
+                                                    <Wheat size={14} className="text-white" />
+                                                </div>
+                                                Carbs
                                             </label>
                                             <input
                                                 type="number"
@@ -203,8 +215,11 @@ export default function MealsTrackerPage() {
                                             <p className="text-xs text-gray-500 mt-1">g</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-gray-900 mb-2">
-                                                <span>🥑</span> Fats
+                                            <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                                <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                                                    <Droplet size={14} className="text-white" />
+                                                </div>
+                                                Fats
                                             </label>
                                             <input
                                                 type="number"
@@ -226,7 +241,7 @@ export default function MealsTrackerPage() {
                                             onClick={handleLogMeal}
                                             className="flex-1 px-6 py-3 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold flex items-center justify-center gap-2"
                                         >
-                                            <span>✓</span>
+                                            <Check size={20} />
                                             <span>Confirm & Log Item</span>
                                         </button>
                                     </div>
@@ -235,7 +250,9 @@ export default function MealsTrackerPage() {
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-2xl">⭐</span>
+                                            <div className="w-6 h-6 bg-pacewell-dark rounded flex items-center justify-center">
+                                                <Star size={16} className="text-white" />
+                                            </div>
                                             <h2 className="text-lg font-bold text-gray-900">Quick Add: High-Protein Favorites</h2>
                                         </div>
                                         <button className="text-pacewell-dark hover:text-pacewell-darker font-semibold">
@@ -249,7 +266,11 @@ export default function MealsTrackerPage() {
                                                 onClick={() => handleAddQuickFavorite(favorite)}
                                                 className="bg-white rounded-lg shadow p-4 hover:shadow-md transition text-center"
                                             >
-                                                <p className="text-2xl mb-2">🍖</p>
+                                                <div className="flex justify-center mb-2">
+                                                    <div className="w-8 h-8 bg-pacewell-dark rounded flex items-center justify-center">
+                                                        <UtensilsCrossed size={18} className="text-white" />
+                                                    </div>
+                                                </div>
                                                 <p className="font-semibold text-gray-900 text-sm mb-2">{favorite.name}</p>
                                                 <div className="text-xs text-gray-600 space-y-1">
                                                     <p>{favorite.calories} kcal</p>
@@ -260,8 +281,10 @@ export default function MealsTrackerPage() {
                                     </div>
                                 </div>
                             </div>
-                            
+
+                            {/* Right Column - Progress & Recent Activity */}
                             <div className="space-y-6">
+                                {/* Today's Progress */}
                                 <div className="bg-white rounded-lg shadow p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase">Today's Progress</h3>
@@ -289,7 +312,8 @@ export default function MealsTrackerPage() {
                                             ></div>
                                         </div>
                                     </div>
-                                    
+
+                                    {/* Macro Summary */}
                                     <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
                                         <div>
                                             <p className="text-xs font-bold text-gray-600 uppercase mb-1">Protein</p>
@@ -312,7 +336,8 @@ export default function MealsTrackerPage() {
                                         Detailed Nutrients Analysis →
                                     </button>
                                 </div>
-                                
+
+                                {/* Recent Activity */}
                                 <div>
                                     <h3 className="text-sm font-bold text-gray-700 uppercase mb-4">Recent Activity</h3>
                                     <div className="space-y-3">

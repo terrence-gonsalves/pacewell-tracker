@@ -16,7 +16,7 @@ import {
     Tooltip, 
     ResponsiveContainer 
 } from 'recharts';
-import { Search, Plus, Flame, Egg, Wheat, Droplet, Check, Star } from 'lucide-react';
+import { Search, Plus, Flame, Egg, Wheat, Droplet, Check, Star, UtensilsCrossed } from 'lucide-react';
 
 // mock data
 const mockMealsData = {
@@ -74,7 +74,6 @@ export default function MealsTrackerPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -281,8 +280,7 @@ export default function MealsTrackerPage() {
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Right Column - Progress & Recent Activity */}
+                            
                             <div className="space-y-6">
                                 {/* Today's Progress */}
                                 <div className="bg-white rounded-lg shadow p-6">
@@ -312,8 +310,7 @@ export default function MealsTrackerPage() {
                                             ></div>
                                         </div>
                                     </div>
-
-                                    {/* Macro Summary */}
+                                    
                                     <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
                                         <div>
                                             <p className="text-xs font-bold text-gray-600 uppercase mb-1">Protein</p>
@@ -336,8 +333,7 @@ export default function MealsTrackerPage() {
                                         Detailed Nutrients Analysis →
                                     </button>
                                 </div>
-
-                                {/* Recent Activity */}
+                                
                                 <div>
                                     <h3 className="text-sm font-bold text-gray-700 uppercase mb-4">Recent Activity</h3>
                                     <div className="space-y-3">

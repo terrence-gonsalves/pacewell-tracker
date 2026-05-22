@@ -72,7 +72,7 @@ export default function BodyMetricsPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // TODO: Connect to API endpoint when ready
+        // TODO: connect to API endpoint when ready
         console.log('Weight entry submitted:', formData);
         setSuccessMessage('Weight entry logged successfully!');
         setTimeout(() => {
@@ -95,15 +95,14 @@ export default function BodyMetricsPage() {
                 <Sidebar />
                 
                 <main className="ml-56 flex-1">
-                    {/* Header */}
                     <header className="bg-white shadow-sm border-b border-gray-200">
-                        <div className="max-w-7xl mx-auto px-8 py-6">
-                            <h1 className="text-3xl font-bold text-pacewell-dark mb-1">Weight Tracker</h1>
+                        <div className="px-8 py-6">
+                            <h1 className="text-3xl font-bold text-pacewell-dark mb-1">Body Metrics</h1>
                             <p className="text-gray-600">Monitor your body composition and track progress toward your {mockWeightData.goalWeight}{mockWeightData.unit} goal.</p>
                         </div>
                     </header>
                     
-                    <div className="max-w-7xl mx-auto px-8 py-6">
+                    <div className="p-8">
                         <div className="grid grid-cols-3 gap-6 mb-8">
                             <div className="bg-white rounded-lg shadow p-6">
                                 <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Current Weight</h3>

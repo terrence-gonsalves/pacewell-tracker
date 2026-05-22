@@ -5,8 +5,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
+import { TrendingDown, TrendingUp, Lightbulb } from 'lucide-react';
 
-// mock data - will be replaced with real API data later
+// mock data
 const mockWeightData = {
     currentWeight: 184.2,
     goalWeight: 175,
@@ -85,7 +86,7 @@ export default function BodyMetricsPage() {
     };
 
     const getTrendIcon = (trend: string) => {
-        return trend === 'down' ? '📉' : '📈';
+        return trend === 'down' ? <TrendingDown size={18} /> : <TrendingUp size={18} />;
     };
 
     return (
@@ -94,6 +95,7 @@ export default function BodyMetricsPage() {
                 <Sidebar />
                 
                 <main className="ml-56 flex-1">
+                    {/* Header */}
                     <header className="bg-white shadow-sm border-b border-gray-200">
                         <div className="max-w-7xl mx-auto px-8 py-6">
                             <h1 className="text-3xl font-bold text-pacewell-dark mb-1">Weight Tracker</h1>
@@ -211,7 +213,10 @@ export default function BodyMetricsPage() {
                                         </div>
                                         
                                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                            <h4 className="font-semibold text-blue-900 mb-2">💡 Tips for Accurate Measurements</h4>
+                                            <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                                                <Lightbulb size={18} />
+                                                Tips for Accurate Measurements
+                                            </h4>
                                             <ul className="text-sm text-blue-800 space-y-1">
                                                 <li>• Weigh yourself at the same time each day (morning is best)</li>
                                                 <li>• Weigh yourself on an empty stomach and after using the bathroom</li>

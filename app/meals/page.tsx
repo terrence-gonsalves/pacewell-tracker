@@ -16,7 +16,17 @@ import {
     Tooltip, 
     ResponsiveContainer 
 } from 'recharts';
-import { Search, Plus, Flame, Egg, Wheat, Droplet, Check, Star, UtensilsCrossed } from 'lucide-react';
+import { 
+    Search, 
+    Plus, 
+    Flame, 
+    Egg, 
+    Wheat, 
+    Droplet, 
+    Check, 
+    Star, 
+    UtensilsCrossed 
+} from 'lucide-react';
 
 // mock data
 const mockMealsData = {
@@ -74,6 +84,7 @@ export default function MealsTrackerPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -131,20 +142,23 @@ export default function MealsTrackerPage() {
                                         <h2 className="text-lg font-bold text-gray-900">Log New Entry</h2>
                                     </div>
                                     
-                                    <div className="flex gap-3 mb-6 pb-6 border-b border-gray-200">
-                                        {mealTimings.map((timing) => (
-                                            <button
-                                                key={timing}
-                                                onClick={() => setSelectedMealTiming(timing)}
-                                                className={`px-4 py-2 rounded-lg transition font-medium ${
-                                                    selectedMealTiming === timing
-                                                        ? 'bg-gray-200 text-gray-900'
-                                                        : 'bg-white text-gray-600 hover:bg-gray-100'
-                                                }`}
-                                            >
-                                                {timing}
-                                            </button>
-                                        ))}
+                                    <div className="mb-6">
+                                        <label className="block text-sm font-semibold text-gray-900 mb-3">Meal Timing</label>
+                                        <div className="flex gap-3 border-b border-gray-200 bg-gray-100 p-1 rounded-lg w-fit">
+                                            {mealTimings.map((timing) => (
+                                                <button
+                                                    key={timing}
+                                                    onClick={() => setSelectedMealTiming(timing)}
+                                                    className={`px-4 py-2 rounded-lg transition font-medium ${
+                                                        selectedMealTiming === timing
+                                                            ? 'bg-white text-pacewell-dark'
+                                                            : 'bg-gray-100 text-gray-600 hover:text-gray-700'
+                                                    }`}
+                                                >
+                                                    {timing}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     
                                     <div className="mb-6">
@@ -169,15 +183,17 @@ export default function MealsTrackerPage() {
                                                 </div>
                                                 Calories
                                             </label>
-                                            <input
-                                                type="number"
-                                                name="calories"
-                                                value={formData.calories}
-                                                onChange={handleInputChange}
-                                                placeholder="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">kcal</p>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    name="calories"
+                                                    value={formData.calories}
+                                                    onChange={handleInputChange}
+                                                    placeholder="0"
+                                                    className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
+                                                />
+                                                <span className="absolute right-3 top-2 text-sm text-gray-500">kcal</span>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -186,15 +202,17 @@ export default function MealsTrackerPage() {
                                                 </div>
                                                 Protein
                                             </label>
-                                            <input
-                                                type="number"
-                                                name="protein"
-                                                value={formData.protein}
-                                                onChange={handleInputChange}
-                                                placeholder="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">g</p>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    name="protein"
+                                                    value={formData.protein}
+                                                    onChange={handleInputChange}
+                                                    placeholder="0"
+                                                    className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
+                                                />
+                                                <span className="absolute right-3 top-2 text-sm text-gray-500">g</span>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -203,15 +221,17 @@ export default function MealsTrackerPage() {
                                                 </div>
                                                 Carbs
                                             </label>
-                                            <input
-                                                type="number"
-                                                name="carbs"
-                                                value={formData.carbs}
-                                                onChange={handleInputChange}
-                                                placeholder="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">g</p>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    name="carbs"
+                                                    value={formData.carbs}
+                                                    onChange={handleInputChange}
+                                                    placeholder="0"
+                                                    className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
+                                                />
+                                                <span className="absolute right-3 top-2 text-sm text-gray-500">g</span>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -220,27 +240,28 @@ export default function MealsTrackerPage() {
                                                 </div>
                                                 Fats
                                             </label>
-                                            <input
-                                                type="number"
-                                                name="fat"
-                                                value={formData.fat}
-                                                onChange={handleInputChange}
-                                                placeholder="0"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
-                                            />
-                                            <p className="text-xs text-gray-500 mt-1">g</p>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    name="fat"
+                                                    value={formData.fat}
+                                                    onChange={handleInputChange}
+                                                    placeholder="0"
+                                                    className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
+                                                />
+                                                <span className="absolute right-3 top-2 text-sm text-gray-500">g</span>
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <div className="flex gap-4">
-                                        <button className="flex-1 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition font-semibold text-gray-900">
+                                    <div className="flex gap-4 justify-end">
+                                        <button className="px-6 py-3 text-gray-700 hover:text-gray-900 transition font-semibold">
                                             Clear
                                         </button>
                                         <button
                                             onClick={handleLogMeal}
-                                            className="flex-1 px-6 py-3 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold flex items-center justify-center gap-2"
+                                            className="px-6 py-3 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold flex items-center gap-2"
                                         >
-                                            <Check size={20} />
                                             <span>Confirm & Log Item</span>
                                         </button>
                                     </div>
@@ -263,17 +284,16 @@ export default function MealsTrackerPage() {
                                             <button
                                                 key={index}
                                                 onClick={() => handleAddQuickFavorite(favorite)}
-                                                className="bg-white rounded-lg shadow p-4 hover:shadow-md transition text-center"
+                                                className="bg-white rounded-lg shadow p-4 hover:shadow-md transition flex flex-col"
                                             >
-                                                <div className="flex justify-center mb-2">
+                                                <div className="flex justify-start mb-3">
                                                     <div className="w-8 h-8 bg-pacewell-dark rounded flex items-center justify-center">
                                                         <UtensilsCrossed size={18} className="text-white" />
                                                     </div>
                                                 </div>
-                                                <p className="font-semibold text-gray-900 text-sm mb-2">{favorite.name}</p>
-                                                <div className="text-xs text-gray-600 space-y-1">
-                                                    <p>{favorite.calories} kcal</p>
-                                                    <p>{favorite.protein}g P</p>
+                                                <p className="font-semibold text-gray-900 text-sm mb-3 text-left">{favorite.name}</p>
+                                                <div className="text-xs text-gray-600 text-left">
+                                                    <p className="mb-1">{favorite.calories} kcal  {favorite.protein}g Protein</p>
                                                 </div>
                                             </button>
                                         ))}
@@ -282,7 +302,6 @@ export default function MealsTrackerPage() {
                             </div>
                             
                             <div className="space-y-6">
-                                {/* Today's Progress */}
                                 <div className="bg-white rounded-lg shadow p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase">Today's Progress</h3>
@@ -338,18 +357,23 @@ export default function MealsTrackerPage() {
                                     <h3 className="text-sm font-bold text-gray-700 uppercase mb-4">Recent Activity</h3>
                                     <div className="space-y-3">
                                         {recentActivity.map((activity, index) => (
-                                            <div key={index} className="bg-white rounded-lg shadow p-4">
-                                                <p className="font-semibold text-gray-900 text-sm mb-2">{activity.name}</p>
-                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-2">
-                                                    <p>{activity.calories} kcal</p>
-                                                    <p className="text-right">{activity.time}</p>
+                                            <div key={index} className="bg-white rounded-lg shadow p-4 flex gap-3">
+                                                <div className="w-8 h-8 bg-pacewell-dark rounded flex items-center justify-center flex-shrink-0">
+                                                    <UtensilsCrossed size={18} className="text-white" />
                                                 </div>
-                                                <div className="flex justify-between text-xs text-gray-600">
-                                                    <span>P: {activity.protein}</span>
-                                                    <span>C: {activity.carbs}</span>
-                                                    <span>F: {activity.fat}</span>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <p className="font-semibold text-gray-900 text-base">{activity.name}</p>
+                                                        <p className="text-sm text-gray-600">{activity.calories} kcal</p>
+                                                        <p className="text-xs text-gray-600">{activity.time}</p>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs text-gray-600 mb-2">
+                                                        <span>Protein: {activity.protein}</span>
+                                                        <span>Carbs: {activity.carbs}</span>
+                                                        <span>Fat: {activity.fat}</span>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-pacewell-dark">{activity.meal}</p>
                                                 </div>
-                                                <p className="text-xs font-semibold text-pacewell-dark mt-2">{activity.meal}</p>
                                             </div>
                                         ))}
                                     </div>

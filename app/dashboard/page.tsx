@@ -416,45 +416,53 @@ export default function DashboardPage() {
                                 Quick Stats
                             </h2>
                             <div className="grid grid-cols-4 gap-6">
-                                <div className="bg-white rounded-lg shadow p-6 text-center">
-                                    <div className="flex justify-center mb-3">
-                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center">
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
                                             <UtensilsCrossed size={24} className="text-white" />
                                         </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-600 uppercase">Meals Logged Today</p>
+                                            <p className="text-2xl font-bold text-gray-900">{data.today.meals_logged}/5</p>
+                                            <p className="text-xs text-gray-600 mt-1">+1 vs yesterday</p>
+                                        </div>
                                     </div>
-                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Meals Logged Today</p>
-                                    <p className="text-2xl font-bold text-gray-900">{data.today.meals_logged}/5</p>
-                                    <p className="text-xs text-gray-600 mt-1">+1 vs yesterday</p>
                                 </div>
-                                <div className="bg-white rounded-lg shadow p-6 text-center">
-                                    <div className="flex justify-center mb-3">
-                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center">
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
                                             <Scale size={24} className="text-white" />
                                         </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-600 uppercase">Weight Logged Today</p>
+                                            <p className="text-xl font-bold text-pacewell-dark">Logged</p>
+                                            <p className="text-xs text-gray-600 mt-1">Consistent</p>
+                                        </div>
                                     </div>
-                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Weight Logged Today</p>
-                                    <p className="text-xl font-bold text-pacewell-dark">Logged</p>
-                                    <p className="text-xs text-gray-600 mt-1">Consistent</p>
                                 </div>
-                                <div className="bg-white rounded-lg shadow p-6 text-center">
-                                    <div className="flex justify-center mb-3">
-                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center">
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
                                             <FileBarChart size={24} className="text-white" />
                                         </div>
-                                    </div>
-                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Body Fat Logged</p>
-                                    <p className="text-2xl font-bold text-gray-900">{data.stats.current_body_fat_pct}%</p>
-                                    <p className="text-xs text-gray-600 mt-1">Monthly Update</p>
-                                </div>
-                                <div className="bg-white rounded-lg shadow p-6 text-center">
-                                    <div className="flex justify-center mb-3">
-                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center">
-                                            <Flame size={24} className="text-white" />
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-600 uppercase">Body Fat Logged</p>
+                                            <p className="text-2xl font-bold text-gray-900">{data.stats.current_body_fat_pct}%</p>
+                                            <p className="text-xs text-gray-600 mt-1">Monthly Update</p>
                                         </div>
                                     </div>
-                                    <p className="text-xs font-bold text-gray-600 uppercase mb-2">Current Streak</p>
-                                    <p className="text-2xl font-bold text-gray-900">14</p>
-                                    <p className="text-xs text-gray-600 mt-1">Personal Best</p>
+                                </div>
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="w-10 h-10 bg-pacewell-dark rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Flame size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-600 uppercase">Current Streak</p>
+                                            <p className="text-2xl font-bold text-gray-900">14 Days</p>
+                                            <p className="text-xs text-gray-600 mt-1">Personal Best</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>

@@ -1,7 +1,5 @@
-// User account creation endpoint with metric/imperial support
-
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { calculateAllTargets } from '@/lib/calculations';
 import { createResponse, validateWeight, validateDate } from '@/lib/utils';
 import { parseWeight, parseHeight } from '@/lib/conversions';
@@ -125,8 +123,8 @@ export async function POST(request: NextRequest) {
             current_intensity as 'Slow' | 'Moderate' | 'Aggressive' | 'Extreme' | 'Insane'
         );
 
-        // create user profile in database
-        const { data: userData, error: userError } = await supabase
+        // create user profile in database using service role (bypasses RLS)
+        const { data: userData, error: userError } = await supabaseAdmin
             .from('users')
             .insert([
                 {
@@ -137,8 +135,8 @@ export async function POST(request: NextRequest) {
                     sex,
                     activity_multiplier,
                     original_weight_kg: weight_kg,
-                    measured_body_fat_pct: measured_body_fat_pct || null,
-                    target_body_fat_pct: target_body_fat_pct || null,
+                    measured_body_fat_pct: measured_body_fat_pct ? measured_body_fat_pct / 100 : null,
+                    target_body_fat_pct: target_body_fat_pct ? target_body_fat_pct / 100 : null,
                     current_goal,
                     current_intensity,
                     use_custom_macro_ratios: false,
@@ -149,9 +147,10 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (userError) {
+            console.error('Supabase insert error:', userError);
 
             // clean up auth user if profile creation fails
-            await supabase.auth.admin.deleteUser(userId);
+            await supabaseAdmin.auth.admin.deleteUser(userId);
 
             return NextResponse.json(
                 createResponse(false, null, 'Failed to create user profile'),

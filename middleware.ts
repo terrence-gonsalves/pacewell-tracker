@@ -1,5 +1,3 @@
-// Authentication middleware for API routes
-
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from './lib/supabase';
 
@@ -26,7 +24,7 @@ export async function middleware(request: NextRequest) {
                 {
                     success: false,
                     data: null,
-                    error: 'Unauthorized - please log in first',
+                    error: 'Unauthorized - please log or register in first',
                 },
                 { status: 401 }
             );

@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
+import Footer from '../components/Footer';
 import { TrendingDown, TrendingUp, Lightbulb, Scale, TrendingUp as TrendingUpIcon, Calendar, CheckCircle } from 'lucide-react';
 
 // mock data
@@ -370,6 +371,8 @@ export default function BodyMetricsPage() {
                             </div>
                         </div>
                     </div>
+
+                    <Footer />
                 </main>
             </div>
         </ProtectedRoute>

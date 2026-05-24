@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import { useRouter } from 'next/navigation';
 import {
     LineChart,
@@ -467,6 +468,8 @@ export default function DashboardPage() {
                             </div>
                         </section>
                     </div>
+
+                    <Footer />
                 </main>
             </div>
         </ProtectedRoute>

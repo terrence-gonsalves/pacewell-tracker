@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import { 
     Search, 
     Edit2, 
@@ -476,6 +477,8 @@ export default function HistoryLogsPage() {
                             </div>
                         </div>
                     </div>
+
+                    <Footer />
                 </main>
             </div>
         </ProtectedRoute>

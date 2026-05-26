@@ -59,7 +59,7 @@ const MOCK_CURRENT_DATA = {
 export default function PersonalGoalsPage() {
     const { user } = useAuth();
 
-    // form state
+    // Form state
     const [goalStrategy, setGoalStrategy] = useState<'Weight Loss' | 'Muscle Gain' | 'Maintenance'>('Weight Loss');
     const [bodyTargets, setBodyTargets] = useState({
         targetWeight: 0,
@@ -91,6 +91,7 @@ export default function PersonalGoalsPage() {
     const getBalanceStatusColor = () => {
         if (totalMacros === 100) return 'text-green-600';
         if (totalMacros > 100) return 'text-yellow-600';
+
         return 'text-red-600';
     };
 
@@ -108,10 +109,10 @@ export default function PersonalGoalsPage() {
             setError(null);
 
             const token = localStorage.getItem('pacewell_token');
-            
+
             if (!token) {
                 setError('No active session. Please log in again.');
-
+                
                 return;
             }
 
@@ -123,11 +124,13 @@ export default function PersonalGoalsPage() {
                 },
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch active goal');
-            }
-
             const data = await response.json();
+
+            if (!response.ok) {
+                console.error('API Error - Status:', response.status, 'Error:', data.error);
+
+                throw new Error(data.error || 'Failed to fetch goal');
+            }
 
             if (data.data) {
                 setActiveGoal(data.data);
@@ -136,11 +139,11 @@ export default function PersonalGoalsPage() {
             }
         } catch (err) {
             console.error('Error fetching active goal:', err);
-            setError('Failed to load your active goal. Please try again.');
+            setError(err instanceof Error ? err.message : 'Failed to load your active goal. Please try again.');
         } finally {
             setIsLoadingGoal(false);
         }
-    }, [user]);
+    }, []);
 
     useEffect(() => {
         if (user) {
@@ -181,14 +184,14 @@ export default function PersonalGoalsPage() {
 
             if (!token) {
                 setError('No active session. Please log in again.');
-
+                
                 return;
             }
 
             const response = await fetch('/api/personal-goals', {
-                method: 'GET',
+                method: 'POST',
                 headers: {
-                  'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
@@ -206,12 +209,10 @@ export default function PersonalGoalsPage() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-
                 throw new Error(errorData.error || 'Failed to save goal');
             }
 
             const data = await response.json();
-
             setActiveGoal(data.data);
             setSuccessMessage('Goal saved successfully!');
 
@@ -220,7 +221,7 @@ export default function PersonalGoalsPage() {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to save goal. Please try again.';
 
-            setError(errorMessage);            
+            setError(errorMessage);
             console.error('Error saving goal:', err);
         } finally {
             setIsSaving(false);
@@ -270,9 +271,11 @@ export default function PersonalGoalsPage() {
                                     disabled={isSaving}
                                     className="px-6 py-2 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
+
                                     {isSaving && (
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                     )}
+
                                     <span>{isSaving ? 'Saving...' : 'Save & Apply'}</span>
                                 </button>
                             </div>
@@ -316,32 +319,33 @@ export default function PersonalGoalsPage() {
                                             onClick={() => setGoalStrategy('Weight Loss')}
                                             disabled={isSaving}
                                             className={`p-6 rounded-lg border-2 transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                                            goalStrategy === 'Weight Loss'
-                                                ? 'border-pacewell-dark bg-green-50'
-                                                : 'border-gray-300 bg-white hover:border-gray-400'
+                                                goalStrategy === 'Weight Loss'
+                                                    ? 'border-pacewell-dark bg-green-50'
+                                                    : 'border-gray-300 bg-white hover:border-gray-400'
                                             }`}
                                         >
                                             <div className="flex justify-center mb-3">
-                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${goalStrategy === 'Weight Loss' ? 'bg-pacewell-dark' : 'bg-gray-200'}`}>
-                                                <Scale size={24} className={goalStrategy === 'Weight Loss' ? 'text-white' : 'text-gray-600'} />
-                                            </div>
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${goalStrategy === 'Weight Loss' ? 'bg-pacewell-dark' : 'bg-gray-200'}`}>
+                                                    <Scale size={24} className={goalStrategy === 'Weight Loss' ? 'text-white' : 'text-gray-600'} />
+                                                </div>
                                             </div>
                                             <h3 className="font-bold text-gray-900 mb-1">Weight Loss</h3>
                                             <p className="text-sm text-gray-600">Prioritize fat reduction</p>
                                         </button>
+                                        
                                         <button
                                             onClick={() => setGoalStrategy('Muscle Gain')}
                                             disabled={isSaving}
                                             className={`p-6 rounded-lg border-2 transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                                            goalStrategy === 'Muscle Gain'
-                                                ? 'border-pacewell-dark bg-green-50'
-                                                : 'border-gray-300 bg-white hover:border-gray-400'
+                                                goalStrategy === 'Muscle Gain'
+                                                    ? 'border-pacewell-dark bg-green-50'
+                                                    : 'border-gray-300 bg-white hover:border-gray-400'
                                             }`}
                                         >
                                             <div className="flex justify-center mb-3">
-                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${goalStrategy === 'Muscle Gain' ? 'bg-pacewell-dark' : 'bg-gray-200'}`}>
-                                                <Dumbbell size={24} className={goalStrategy === 'Muscle Gain' ? 'text-white' : 'text-gray-600'} />
-                                            </div>
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${goalStrategy === 'Muscle Gain' ? 'bg-pacewell-dark' : 'bg-gray-200'}`}>
+                                                    <Dumbbell size={24} className={goalStrategy === 'Muscle Gain' ? 'text-white' : 'text-gray-600'} />
+                                                </div>
                                             </div>
                                             <h3 className="font-bold text-gray-900 mb-1">Muscle Gain</h3>
                                             <p className="text-sm text-gray-600">Anabolic surplus focus</p>
@@ -351,15 +355,15 @@ export default function PersonalGoalsPage() {
                                             onClick={() => setGoalStrategy('Maintenance')}
                                             disabled={isSaving}
                                             className={`p-6 rounded-lg border-2 transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                                            goalStrategy === 'Maintenance'
-                                                ? 'border-pacewell-dark bg-green-50'
-                                                : 'border-gray-300 bg-white hover:border-gray-400'
+                                                goalStrategy === 'Maintenance'
+                                                    ? 'border-pacewell-dark bg-green-50'
+                                                    : 'border-gray-300 bg-white hover:border-gray-400'
                                             }`}
                                         >
                                             <div className="flex justify-center mb-3">
-                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${goalStrategy === 'Maintenance' ? 'bg-pacewell-dark' : 'bg-gray-200'}`}>
-                                                <Zap size={24} className={goalStrategy === 'Maintenance' ? 'text-white' : 'text-gray-600'} />
-                                            </div>
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${goalStrategy === 'Maintenance' ? 'bg-pacewell-dark' : 'bg-gray-200'}`}>
+                                                    <Zap size={24} className={goalStrategy === 'Maintenance' ? 'text-white' : 'text-gray-600'} />
+                                                </div>
                                             </div>
                                             <h3 className="font-bold text-gray-900 mb-1">Maintenance</h3>
                                             <p className="text-sm text-gray-600">Stable metabolic balance</p>
@@ -626,22 +630,21 @@ export default function PersonalGoalsPage() {
                                         <div key={index} className={`flex gap-4 ${index < activeGoal.projected_milestones.length - 1 ? 'pb-6' : ''}`}>
                                             <div className="flex flex-col items-center">
                                                 <div className="w-5 h-5 bg-white border-2 border-pacewell-dark rounded-full"></div>
-
+                                                
                                                 {index < activeGoal.projected_milestones.length - 1 && (
-                                                <div className="w-0.5 h-12 bg-gray-300"></div>
+                                                    <div className="w-0.5 h-12 bg-gray-300"></div>
                                                 )}
 
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-pacewell-dark">{formatDate(milestone.date)}</p>
-                                                <p className="text-xs text-gray-600">{milestone.milestone_label}</p>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    Weight: {milestone.projected_weight} lbs | Body Fat: {milestone.projected_body_fat_percentage}%
-                                                </p>
+                                            <p className="text-sm font-bold text-pacewell-dark">{formatDate(milestone.date)}</p>
+                                            <p className="text-xs text-gray-600">{milestone.milestone_label}</p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Weight: {milestone.projected_weight} lbs | Body Fat: {milestone.projected_body_fat_percentage}%
+                                            </p>
                                             </div>
                                         </div>
                                         ))}
-
                                     </div>
                                     ) : (
                                     <div className="py-8 text-center">
@@ -662,7 +665,7 @@ export default function PersonalGoalsPage() {
                         )}
 
                     </div>
-
+                    
                     <Footer />
                 </main>
             </div>

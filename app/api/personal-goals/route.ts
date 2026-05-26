@@ -1,11 +1,12 @@
 /**
  * API Route: /api/personal-goals
  * Handles GET (fetch active goal) and POST (save new goal)
+ * Location: app/api/personal-goals/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import { calculateProjectedMilestones } from '@/lib/projected-milestones';
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { calculateProjectedMilestones } from '@/lib/projected-milestones'
 
 // GET: fetch the active goal for the authenticated user
 export async function GET(request: NextRequest) {
@@ -21,33 +22,36 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // extract the token and verify it
         const token = authHeader.split(' ')[1];
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
-        }
+        // create authenticated Supabase client with user's token
+        const supabaseAuth = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                global: {
+                    headers: {
+                        authorization: `Bearer ${token}`,
+                    },
+                },
+            }
+        );
 
-        // fetch the active goal for this user
-        const { data: goal, error: queryError } = await supabaseAdmin
+        // query using authenticated client - RLS policies will automatically filter by user
+        const { data: goal, error: queryError } = await supabaseAuth
             .from('personal_goals')
             .select('*')
-            .eq('user_id', user.id)
             .eq('status', 'active')
-            .single() // expect only one active goal
+            .single();
 
-        // no active goal exists
+        // it's okay if no active goal exists
         if (queryError && queryError.code === 'PGRST116') {
 
             // no rows returned - this is expected for new users
             return NextResponse.json(
                 { data: null },
                 { status: 200 }
-            )
+            );
         }
 
         if (queryError) {
@@ -87,16 +91,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // extract the token and verify it
         const token = authHeader.split(' ')[1];
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
-        }
+        // create authenticated Supabase client with user's token
+        const supabaseAuth = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                global: {
+                    headers: {
+                        authorization: `Bearer ${token}`,
+                    },
+                },
+            }
+        )
 
         // parse request body
         const body = await request.json();
@@ -110,14 +118,14 @@ export async function POST(request: NextRequest) {
             fats_percentage,
             current_weight,
             current_body_fat_percentage,
-        } = body
+        } = body;
 
         // validate required fields
         if (
-            !goal_strategy || 
-            !target_weight || 
-            target_body_fat_percentage === undefined || 
-            !daily_calorie_target || 
+            !goal_strategy ||
+            !target_weight ||
+            target_body_fat_percentage === undefined ||
+            !daily_calorie_target ||
             protein_percentage === undefined ||
             carbs_percentage === undefined ||
             fats_percentage === undefined
@@ -137,7 +145,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: `Macro percentages must total 100%. Current total: ${macroPct.toFixed(1)}%` },
                 { status: 400 }
-            )
+            );
         }
 
         // validate numeric constraints
@@ -150,7 +158,7 @@ export async function POST(request: NextRequest) {
 
         if (daily_calorie_target < 1200 || daily_calorie_target > 10000) {
             return NextResponse.json(
-                { error: 'Daily calorie target must be between 1200 and 10000' },
+                { error: 'Daily calorie target must be between 1200 and 10,000' },
                 { status: 400 }
             );
         }
@@ -168,7 +176,7 @@ export async function POST(request: NextRequest) {
 
         try {
             projected_milestones = calculateProjectedMilestones(
-                goal_strategy,
+                goal_strategy as 'Weight Loss' | 'Muscle Gain' | 'Maintenance',
                 current_weight,
                 target_weight,
                 current_body_fat_percentage,
@@ -186,10 +194,9 @@ export async function POST(request: NextRequest) {
         // begin transaction-like operations
 
         // 1. mark any existing active goal as completed
-        const { error: updateError } = await supabaseAdmin
+        const { error: updateError } = await supabaseAuth
             .from('personal_goals')
             .update({ status: 'completed' })
-            .eq('user_id', user.id)
             .eq('status', 'active');
 
         if (updateError) {
@@ -202,20 +209,19 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. insert new active goal
-        const { data: newGoal, error: insertError } = await supabaseAdmin
+        const { data: newGoal, error: insertError } = await supabaseAuth
             .from('personal_goals')
             .insert([
                 {
-                    user_id: user.id,
-                    status: 'active',
-                    goal_strategy,
-                    target_weight,
-                    target_body_fat_percentage,
-                    daily_calorie_target,
-                    protein_percentage,
-                    carbs_percentage,
-                    fats_percentage,
-                    projected_milestones,
+                status: 'active',
+                goal_strategy,
+                target_weight,
+                target_body_fat_percentage,
+                daily_calorie_target,
+                protein_percentage,
+                carbs_percentage,
+                fats_percentage,
+                projected_milestones,
                 },
             ])
             .select()

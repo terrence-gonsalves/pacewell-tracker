@@ -108,7 +108,7 @@ export default function PersonalGoalsPage() {
             setError(null);
 
             const token = localStorage.getItem('pacewell_token');
-
+            
             if (!token) {
                 setError('No active session. Please log in again.');
 

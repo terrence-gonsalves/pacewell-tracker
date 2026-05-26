@@ -1,11 +1,19 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Grid3x3, UtensilsCrossed, Scale, Target, TrendingUp, Settings, LogOut, Zap } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
+    const { logout } = useAuth();
+
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
+    };
 
     const menuItems = [
         { icon: Grid3x3, label: 'Dashboard', href: '/dashboard' },
@@ -28,9 +36,11 @@ export default function Sidebar() {
             
             <nav className="flex-1 p-4">
                 <ul className="space-y-2">
+
                     {menuItems.map((item) => {
                         const isActive = pathname === item.href;
                         const IconComponent = item.icon;
+                        
                         return (
                             <li key={item.href}>
                                 <Link
@@ -47,6 +57,7 @@ export default function Sidebar() {
                             </li>
                         );
                     })}
+
                 </ul>
             </nav>
             
@@ -55,7 +66,10 @@ export default function Sidebar() {
                     <Settings size={20} />
                     <span>Settings</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition">
+                <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition"
+                >
                     <LogOut size={20} />
                     <span>Logout</span>
                 </button>

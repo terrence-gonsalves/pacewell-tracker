@@ -11,8 +11,7 @@ import { calculateProjectedMilestones } from '@/lib/projected-milestones'
 // GET: fetch the active goal for the authenticated user
 export async function GET(request: NextRequest) {
     try {
-        const authHeader = request.headers.get('authorization')
-        console.log('Auth Header:', authHeader ? 'Present' : 'Missing');
+        const authHeader = request.headers.get('authorization');
         
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return NextResponse.json(
@@ -22,7 +21,6 @@ export async function GET(request: NextRequest) {
         }
   
         const token = authHeader.split(' ')[1];
-        console.log('Token extracted:', token ? 'Yes' : 'No');
     
         // create authenticated Supabase client with user's token
         const supabaseAuth = createClient(
@@ -242,7 +240,7 @@ export async function POST(request: NextRequest) {
         );
     } catch (error) {
         console.error('POST /api/personal-goals error:', error);
-        
+
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

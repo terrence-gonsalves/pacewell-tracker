@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from './lib/supabase';
 
 // routes that don't require authentication
-const publicRoutes = ['/api/auth/signup', '/api/auth/login'];
+const publicRoutes = ['/api/auth/signup', '/api/auth/login', '/api/personal-goals'];
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
@@ -12,14 +11,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // for protected routes, verify authentication
+    // for protected routes, check for authorization header
     try {
-        const {
-            data: { user },
-            error,
-        } = await supabase.auth.getUser();
+        const authHeader = request.headers.get('authorization');
 
-        if (error || !user) {
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return NextResponse.json(
                 {
                     success: false,
@@ -30,15 +26,8 @@ export async function middleware(request: NextRequest) {
             );
         }
 
-        // attach user to request headers for access in route handlers
-        const requestHeaders = new Headers(request.headers);
-        requestHeaders.set('x-user-id', user.id);
-
-        return NextResponse.next({
-            request: {
-                headers: requestHeaders,
-            },
-        });
+        // token is present - let the route handler verify it
+        return NextResponse.next();
     } catch (error) {
         return NextResponse.json(
             {

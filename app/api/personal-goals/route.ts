@@ -11,19 +11,19 @@ import { calculateProjectedMilestones } from '@/lib/projected-milestones'
 // GET: fetch the active goal for the authenticated user
 export async function GET(request: NextRequest) {
     try {
-
-        // get the authorization header
-        const authHeader = request.headers.get('authorization');
-
+        const authHeader = request.headers.get('authorization')
+        console.log('Auth Header:', authHeader ? 'Present' : 'Missing');
+        
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
             );
         }
-
+  
         const token = authHeader.split(' ')[1];
-
+        console.log('Token extracted:', token ? 'Yes' : 'No');
+    
         // create authenticated Supabase client with user's token
         const supabaseAuth = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,18 +31,22 @@ export async function GET(request: NextRequest) {
             {
                 global: {
                     headers: {
-                        authorization: `Bearer ${token}`,
+                    authorization: `Bearer ${token}`,
                     },
                 },
             }
-        );
-
-        // query using authenticated client - RLS policies will automatically filter by user
+        )
+  
+        console.log('Supabase client created');
+    
+        // query using authenticated client
         const { data: goal, error: queryError } = await supabaseAuth
             .from('personal_goals')
             .select('*')
             .eq('status', 'active')
-            .single();
+            .single()
+    
+        console.log('Query error:', queryError);
 
         // it's okay if no active goal exists
         if (queryError && queryError.code === 'PGRST116') {

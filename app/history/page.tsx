@@ -1,160 +1,132 @@
+/**
+ * History & Logs Page - app/history-logs/page.tsx
+ * Displays meal logs, weight entries, and body fat measurements from the database
+ * Shows logs from the last 30 days with filtering and expandable details
+ */
+
 "use client";
 
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
-import { 
-    Search, 
-    Edit2, 
-    Trash2, 
-    ChevronDown, 
-    ChevronUp, 
-    UtensilsCrossed, 
-    Scale, 
-    Target, 
-    Dumbbell, 
-    TrendingUp 
-} from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, UtensilsCrossed, Scale, Target, AlertCircle } from 'lucide-react';
 
-// mock data
-const mockMetrics = {
-    avgDailyCalories: 2145,
-    avgDailyCaloriesChange: 4,
-    weightChange: -1.2,
-    completionRate: 94,
-    proteinDaysAchieved: 8,
-};
+interface MealLog {
+    id: string
+    type: 'Meal'
+    date: string
+    meal_type: string
+    calories: number
+    protein_g: number
+    carbs_g: number
+    fat_g: number
+    food_description: string | null
+    created_at: string
+}
 
-const mockLogEntries = [
-    {
-        id: '1',
-        date: 'Oct 24, 2024',
-        time: '12:45 PM',
-        type: 'meal',
-        typeLabel: 'Meal',
-        summary: 'Grilled Salmon with Quinoa and Avocado',
-        calories: 520,
-        protein: { value: 42, target: 60 },
-        carbs: { value: 35, target: 100 },
-        fats: { value: 18, target: 70 },
-        notes: 'Felt very satiated. Good post-workout meal.',
-    },
-    {
-        id: '2',
-        date: 'Oct 24, 2024',
-        time: '07:15 AM',
-        type: 'weight',
-        typeLabel: 'Weight',
-        summary: '185.4 lbs (Daily Weight-in)',
-        weight: 185.4,
-        bodyFat: 22.1,
-    },
-    {
-        id: '3',
-        date: 'Oct 23, 2024',
-        time: '07:30 PM',
-        type: 'meal',
-        typeLabel: 'Meal',
-        summary: 'Lean Beef Stir-fry with Broccoli',
-        calories: 410,
-        protein: { value: 38, target: 60 },
-        carbs: { value: 28, target: 100 },
-        fats: { value: 12, target: 70 },
-    },
-    {
-        id: '4',
-        date: 'Oct 23, 2024',
-        time: '01:00 PM',
-        type: 'meal',
-        typeLabel: 'Meal',
-        summary: 'Mediterranean Hummus Wrap',
-        calories: 380,
-        protein: { value: 12, target: 60 },
-        carbs: { value: 52, target: 100 },
-        fats: { value: 14, target: 70 },
-    },
-    {
-        id: '5',
-        date: 'Oct 22, 2024',
-        time: '09:00 AM',
-        type: 'bodyFat',
-        typeLabel: 'Body Fat',
-        summary: '18.2% (Home Sensor)',
-        weight: 186.2,
-        bodyFat: 18.2,
-    },
-    {
-        id: '6',
-        date: 'Oct 22, 2024',
-        time: '06:30 AM',
-        type: 'exercise',
-        typeLabel: 'Exercise',
-        summary: 'Morning Strength Training - Upper Body',
-        duration: 45,
-    },
-];
+interface WeightLog {
+    id: string
+    type: 'Weight'
+    date: string
+    weight_kg: number
+    measured_body_fat_pct: number | null
+    calculated_body_fat_pct: number | null
+    lean_fat_kg?: number
+    notes: string | null
+    created_at: string
+}
 
-const mockMilestones = [
-    {
-        id: '1',
-        icon: 'target',
-        title: 'Weekly Goal Met',
-        description: "You've logged meals for 7 days straight!",
-        time: '2H AGO',
-    },
-    {
-        id: '2',
-        icon: 'scale',
-        title: 'Weight Drop',
-        description: 'New personal best: 184.5 lbs reached.',
-        time: 'YESTERDAY',
-    },
-    {
-        id: '3',
-        icon: 'protein',
-        title: 'Macro Master',
-        description: 'Hit your protein target for 3 days.',
-        time: '2 DAYS AGO',
-    },
-];
+interface BodyFatLog {
+    id: string
+    type: 'Body Fat'
+    date: string
+    measured_body_fat_pct: number
+    notes: string | null
+    created_at: string
+}
+
+type LogEntry = MealLog | WeightLog | BodyFatLog;
 
 const filterOptions = ['All', 'Meal', 'Weight', 'Body Fat'];
+const entriesPerPage = 6;
 
 export default function HistoryLogsPage() {
-    const { user } = useAuth();
+    const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [selectedFilter, setSelectedFilter] = useState('All');
-    const [expandedId, setExpandedId] = useState<string | null>('1');
+    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageWindow, setPageWindow] = useState(1);
 
+    // fetch logs from API
+    const fetchLogs = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            const token = localStorage.getItem('pacewell_token');
+
+            if (!token) {
+                setError('No active session. Please log in again.');
+                return;
+            }
+
+            const response = await fetch('/api/history-logs', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error('API Error - Status:', response.status, 'Error:', data.error);
+                throw new Error(data.error || 'Failed to fetch logs');
+            }
+
+            setLogs(data.data || []);
+        } catch (err) {
+            console.error('Error fetching logs:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load your logs. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchLogs();
+    }, [fetchLogs]);
+
     const getFilteredEntries = () => {
-        let filtered = mockLogEntries;
+        let filtered = logs;
 
         if (selectedFilter !== 'All') {
-            filtered = filtered.filter((entry) => {
-                if (selectedFilter === 'Meal') return entry.type === 'meal';
-                if (selectedFilter === 'Weight') return entry.type === 'weight';
-                if (selectedFilter === 'Body Fat') return entry.type === 'bodyFat';
-                return true;
-            });
+            filtered = filtered.filter((entry) => entry.type === selectedFilter);
         }
 
         if (searchTerm) {
-            filtered = filtered.filter((entry) =>
-                entry.summary.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            filtered = filtered.filter((entry) => {
+                if (entry.type === 'Meal') {
+                    return entry.food_description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            entry.meal_type.toLowerCase().includes(searchTerm.toLowerCase());
+                }
+
+                return true;
+            });
         }
 
         return filtered;
     };
 
     const filteredEntries = getFilteredEntries();
-    const totalEntries = 124;
-    const entriesPerPage = 6;
-    const totalPages = Math.ceil(totalEntries / entriesPerPage);
+    const totalPages = Math.ceil(filteredEntries.length / entriesPerPage);
+    const startIndex = (currentPage - 1) * entriesPerPage;
+    const paginatedEntries = filteredEntries.slice(startIndex, startIndex + entriesPerPage);
 
     const toggleExpand = (id: string) => {
         setExpandedId(expandedId === id ? null : id);
@@ -162,40 +134,63 @@ export default function HistoryLogsPage() {
 
     const getTypeIcon = (type: string) => {
         switch (type) {
-            case 'meal':
+            case 'Meal':
                 return <UtensilsCrossed size={16} />;
-            case 'weight':
+            case 'Weight':
                 return <Scale size={16} />;
-            case 'bodyFat':
+            case 'Body Fat':
                 return <Target size={16} />;
-            case 'exercise':
-                return <Dumbbell size={16} />;
             default:
                 return null;
         }
     };
 
-    const getMilestoneIcon = (icon: string) => {
-        switch (icon) {
-            case 'target':
-                return <Target size={20} />;
-            case 'scale':
-                return <Scale size={20} />;
-            case 'protein':
-                return <UtensilsCrossed size={20} />;
-            default:
-                return null;
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    const handlePreviousPage = () => {
+        if (pageWindow > 1) {
+            setPageWindow(pageWindow - 1);
+            setCurrentPage((pageWindow - 1) * 3);
         }
     };
 
-    const MacroProgressBar = ({ value, target }: { value: number; target: number }) => {
-        const percentage = (value / target) * 100;
+    const handleNextPage = () => {
+        if (pageWindow * 3 < totalPages) {
+            setPageWindow(pageWindow + 1);
+            setCurrentPage(pageWindow * 3 + 1);
+        }
+    };
+
+    const getPageNumbers = () => {
+            const start = (pageWindow - 1) * 3 + 1;
+            const end = Math.min(start + 2, totalPages);
+            const pages = [];
+
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            
+            return pages;
+    };
+
+    const pageNumbers = getPageNumbers();
+
+    const MacroBar = ({ value, label, color }: { value: number; label: string; color: string }) => {
         return (
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div
-                    className="bg-pacewell-dark h-2 rounded-full"
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                />
+            <div>
+                <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-semibold text-gray-700">{label}</span>
+                    <span className="text-xs font-bold text-gray-900">{value}g</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div
+                        className={`${color} h-1.5 rounded-full`}
+                        style={{ width: `${Math.min((value / 50) * 100, 100)}%` }}
+                    />
+                </div>
             </div>
         );
     };
@@ -209,275 +204,302 @@ export default function HistoryLogsPage() {
                     <header className="bg-white shadow-sm border-b border-gray-200">
                         <div className="px-8 py-6">
                             <h1 className="text-3xl font-bold text-gray-900">History & Logs</h1>
-                            <p className="text-gray-600 mt-1">Review and manage your health journey data.</p>
+                            <p className="text-gray-600 mt-1">View and manage your complete tracking history.</p>
                         </div>
                     </header>
                     
                     <div className="p-8">
-                        <div className="grid grid-cols-4 gap-6 mb-8">
-                            <div className="bg-white rounded-lg shadow p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                    <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Avg Daily Calories</h3>
-                                    <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-lg">
-                                        <span className="text-red-600 text-sm font-semibold" style={{ transform: 'rotate(-20deg)', display: 'inline-block' }}>↑</span>
-                                        <span className="text-red-600 text-sm font-semibold">{mockMetrics.avgDailyCaloriesChange}%</span>
-                                    </div>
-                                </div>
-                                <div className="text-3xl font-bold text-gray-900">{mockMetrics.avgDailyCalories}</div>
-                                <p className="text-sm text-gray-600 mt-2">Last 7 days</p>
-                            </div>
-                            
-                            <div className="bg-white rounded-lg shadow p-6">
-                                <div className="flex items-start justify-between mb-4">
-                                    <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Weight Change</h3>
-                                    <span className="text-gray-900 text-sm font-semibold">Progress</span>
-                                </div>
-                                <div className="text-3xl font-bold text-gray-900">{mockMetrics.weightChange} lbs</div>
-                                <p className="text-sm text-gray-600 mt-2">Current Week</p>
-                            </div>
-                            
-                            <div className="bg-white rounded-lg shadow p-6">
-                                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Completion Rate</h3>
-                                <div className="text-3xl font-bold text-gray-900">{mockMetrics.completionRate}%</div>
-                                <p className="text-sm text-gray-600 mt-2">Logging Consistency</p>
-                            </div>
-                            
-                            <div className="bg-white rounded-lg shadow p-6">
-                                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Protein Target</h3>
-                                <div className="text-3xl font-bold text-gray-900">{mockMetrics.proteinDaysAchieved}/10</div>
-                                <p className="text-sm text-gray-600 mt-2">Days Achieved</p>
+
+                        {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                            <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-red-800">{error}</p>
+                        </div>
+                        )}
+
+                        {isLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="text-center">
+                                <div className="w-12 h-12 border-4 border-pacewell-dark border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                                <p className="text-gray-600">Loading your logs...</p>
                             </div>
                         </div>
-                        
-                        <div className="grid grid-cols-3 gap-8">
-                            <div className="col-span-2 space-y-4">
-                                <div className="bg-white rounded-lg shadow p-6 flex items-center gap-6">
-                                    <div className="flex-1 relative">
-                                        <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-                                        <input
-                                            type="text"
-                                            placeholder="Search logs (e.g. 'Chicken Salad')..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent text-sm"
-                                        />
-                                    </div>
-                                    
-                                    <div className="flex gap-3">
-                                        {filterOptions.map((option) => (
+                        ) : (
+                        <>
+                            <div className="grid grid-cols-3 gap-8">
+                                <div className="col-span-2 space-y-6">
+                                    <div className="bg-white rounded-lg shadow p-6">
+                                        <div className="mb-6">
+                                            <div className="relative">
+                                                <Search size={20} className="absolute left-3 top-3 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search meals or notes..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                        setPageWindow(1);
+                                                    }}
+                                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex gap-3 flex-wrap">
+
+                                            {filterOptions.map((filter) => (
                                             <button
-                                                key={option}
-                                                onClick={() => setSelectedFilter(option)}
-                                                className={`px-4 py-2 rounded-lg font-semibold transition text-sm ${
-                                                    selectedFilter === option
-                                                        ? 'bg-pacewell-dark text-white'
-                                                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                                key={filter}
+                                                onClick={() => {
+                                                    setSelectedFilter(filter);
+                                                    setCurrentPage(1);
+                                                    setPageWindow(1);
+                                                }}
+                                                className={`px-4 py-2 rounded-lg font-semibold transition ${
+                                                selectedFilter === filter
+                                                    ? 'bg-pacewell-dark text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                 }`}
                                             >
-                                                {option}
+                                                {filter}
                                             </button>
-                                        ))}
+                                            ))}
+
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="bg-gray-100 rounded-lg p-6 grid grid-cols-12 gap-4">
-                                    <div className="col-span-3 text-sm font-semibold text-gray-600 uppercase tracking-wide">Date & Time</div>
-                                    <div className="col-span-2 text-sm font-semibold text-gray-600 uppercase tracking-wide">Type</div>
-                                    <div className="col-span-5 text-sm font-semibold text-gray-600 uppercase tracking-wide">Summary</div>
-                                    <div className="col-span-2 text-sm font-semibold text-gray-600 uppercase tracking-wide text-right">Actions</div>
-                                </div>
-                                
-                                <div className="space-y-4">
-                                    {filteredEntries.map((entry) => (
-                                        <div key={entry.id} className="bg-white rounded-lg shadow overflow-hidden">
-                                            <div className="p-6 grid grid-cols-12 gap-4 items-start border-b border-gray-200">
-                                                <div className="col-span-3">
-                                                    <div className="text-gray-900 font-semibold">{entry.date}</div>
-                                                    <div className="text-sm text-gray-600">{entry.time}</div>
+                                    
+                                    {filteredEntries.length === 0 ? (
+                                    <div className="bg-white rounded-lg shadow p-12 text-center">
+                                        <p className="text-gray-600">No logs found for the selected filters.</p>
+                                    </div>
+                                    ) : (
+                                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                                        <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 border-b border-gray-200 font-semibold text-sm text-gray-700">
+                                            <div>DATE & TIME</div>
+                                            <div>TYPE</div>
+                                            <div>SUMMARY</div>
+                                            <div>ACTIONS</div>
+                                        </div>
+                                        
+                                        {paginatedEntries.map((entry) => (
+                                        <div key={entry.id} className="border-b border-gray-200 last:border-b-0">
+                                            <div className="grid grid-cols-4 gap-4 p-4 hover:bg-gray-50 transition items-center">
+                                                <div className="text-sm text-gray-900">
+                                                    {formatDate(entry.date)}
                                                 </div>
-                                                
-                                                <div className="col-span-2">
-                                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-                                                        <span className="text-gray-700">{getTypeIcon(entry.type)}</span>
-                                                        <span className="text-sm font-semibold text-gray-700">{entry.typeLabel}</span>
-                                                    </div>
+                                                <div className="flex items-center gap-2 text-gray-700">
+                                                    <div className="text-pacewell-dark">{getTypeIcon(entry.type)}</div>
+                                                    <span className="text-sm font-medium">{entry.type}</span>
                                                 </div>
-                                                
-                                                <div className="col-span-5">
-                                                    <div className="text-gray-900 font-semibold">{entry.summary}</div>
+                                                <div className="text-sm text-gray-600">
+
+                                                    {entry.type === 'Meal' && (
+                                                    <span className="capitalize">{(entry as MealLog).meal_type} - {(entry as MealLog).food_description || 'No description'}</span>
+                                                    )}
+
+                                                    {entry.type === 'Weight' && (
+                                                    <span>{(entry as WeightLog).weight_kg} kg</span>
+                                                    )}
+
+                                                    {entry.type === 'Body Fat' && (
+                                                    <span>{(entry as BodyFatLog).measured_body_fat_pct}% body fat</span>
+                                                    )}
+
                                                 </div>
-                                                
-                                                <div className="col-span-2 flex items-center justify-end gap-2">
-                                                    <button className="p-2 text-gray-400 hover:text-gray-600 transition">
-                                                        <Edit2 size={18} />
-                                                    </button>
-                                                    <button className="p-2 text-red-400 hover:text-red-600 transition">
-                                                        <Trash2 size={18} />
-                                                    </button>
+                                                <div className="flex justify-end">
                                                     <button
                                                         onClick={() => toggleExpand(entry.id)}
-                                                        className="p-2 text-gray-400 hover:text-gray-600 transition"
+                                                        className="p-2 hover:bg-gray-200 rounded-lg transition text-gray-600"
                                                     >
+                                                        
                                                         {expandedId === entry.id ? (
-                                                            <ChevronUp size={18} />
+                                                        <ChevronUp size={20} />
                                                         ) : (
-                                                            <ChevronDown size={18} />
+                                                        <ChevronDown size={20} />
                                                         )}
+
                                                     </button>
                                                 </div>
                                             </div>
                                             
                                             {expandedId === entry.id && (
-                                                <div className="px-6 py-4 bg-gray-50 space-y-6 border-t border-gray-200">
-                                                    {entry.type === 'meal' && 'calories' in entry && 'protein' in entry && 'carbs' in entry && 'fats' in entry && (
-                                                        <>
-                                                            <div className="grid grid-cols-4 gap-4">
-                                                                <div>
-                                                                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Calories</p>
-                                                                    <p className="text-xl font-bold text-pacewell-dark">{(entry as any).calories} kcal</p>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Protein</p>
-                                                                    <p className="text-xl font-bold text-gray-900">{(entry as any).protein.value}g</p>
-                                                                    <MacroProgressBar value={(entry as any).protein.value} target={(entry as any).protein.target} />
-                                                                </div>
+                                            <div className="bg-gray-50 p-4 border-t border-gray-200 space-y-4">
 
-                                                                <div>
-                                                                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Carbs</p>
-                                                                    <p className="text-xl font-bold text-gray-900">{(entry as any).carbs.value}g</p>
-                                                                    <MacroProgressBar value={(entry as any).carbs.value} target={(entry as any).carbs.target} />
-                                                                </div>
-                                                                
-                                                                <div>
-                                                                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Fats</p>
-                                                                    <p className="text-xl font-bold text-gray-900">{(entry as any).fats.value}g</p>
-                                                                    <MacroProgressBar value={(entry as any).fats.value} target={(entry as any).fats.target} />
-                                                                </div>
+                                                {entry.type === 'Meal' && (
+                                                <>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-600 uppercase mb-2">Calories</p>
+                                                            <p className="text-2xl font-bold text-gray-900">{(entry as MealLog).calories} kcal</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-600 uppercase mb-2">Meal Type</p>
+                                                            <p className="text-lg font-semibold text-gray-900 capitalize">{(entry as MealLog).meal_type}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-white p-4 rounded-lg space-y-3">
+                                                        <p className="text-xs font-bold text-gray-600 uppercase">Macro Breakdown</p>
+                                                        <MacroBar value={(entry as MealLog).protein_g} label="Protein" color="bg-pacewell-dark" />
+                                                        <MacroBar value={(entry as MealLog).carbs_g} label="Carbs" color="bg-yellow-500" />
+                                                        <MacroBar value={(entry as MealLog).fat_g} label="Fats" color="bg-orange-500" />
+                                                    </div>
+                                                </>
+                                                )}
+
+                                                {entry.type === 'Weight' && (
+                                                <>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-600 uppercase mb-2">Weight</p>
+                                                            <p className="text-2xl font-bold text-gray-900">{(entry as WeightLog).weight_kg} kg</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-600 uppercase mb-2">Body Fat</p>
+                                                            <p className="text-2xl font-bold text-gray-900">                                                            
+                                                                {(entry as WeightLog).measured_body_fat_pct || (entry as WeightLog).calculated_body_fat_pct || '-'}%                                                            
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-white p-4 rounded-lg space-y-3">
+                                                        <p className="text-xs font-bold text-gray-600 uppercase mb-3">Composition</p>
+                                                        <div>
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <span className="text-xs font-semibold text-gray-700">Body Fat</span>
+                                                                <span className="text-xs font-bold text-gray-900">
+                                                                    {(entry as WeightLog).measured_body_fat_pct || (entry as WeightLog).calculated_body_fat_pct || '-'}%                                                                
+                                                                </span>
                                                             </div>
-                                                            
-                                                            {'notes' in entry && (entry as any).notes && (
-                                                                <div className="border-t border-gray-200 pt-4">
-                                                                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Notes</p>
-                                                                    <p className="text-gray-700 italic">"{(entry as any).notes}"</p>
-                                                                </div>
-                                                            )}
-                                                        </>
+                                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                                <div
+                                                                    className="bg-orange-500 h-2 rounded-full"
+                                                                    style={{
+                                                                        width: `${Math.min(((entry as WeightLog).measured_body_fat_pct || (entry as WeightLog).calculated_body_fat_pct || 0) * 2, 100)}%`
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <span className="text-xs font-semibold text-gray-700">Lean Mass</span>
+                                                                <span className="text-xs font-bold text-gray-900">{(entry as WeightLog).lean_fat_kg} kg</span>
+                                                            </div>
+                                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                                <div
+                                                                    className="bg-pacewell-dark h-2 rounded-full"
+                                                                    style={{
+                                                                    width: `${Math.min(((entry as WeightLog).lean_fat_kg || 0) / 100 * 100, 100)}%`
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {(entry as WeightLog).notes && (
+                                                    <div className="bg-white p-4 rounded-lg">
+                                                        <p className="text-xs font-bold text-gray-600 uppercase mb-2">Notes</p>
+                                                        <p className="text-sm text-gray-700">{(entry as WeightLog).notes}</p>
+                                                    </div>
                                                     )}
 
-                                                    {entry.type === 'weight' && (
-                                                        <div>
-                                                            <p className="text-sm text-gray-700">
-                                                                <span className="font-semibold">Weight:</span> {entry.weight} lbs | <span className="font-semibold">Body Fat:</span> {entry.bodyFat}%
-                                                            </p>
+                                                </>
+                                                )}
+
+                                                {entry.type === 'Body Fat' && (
+                                                <>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-600 uppercase mb-2">Body Fat %</p>
+                                                        <p className="text-3xl font-bold text-gray-900">{(entry as BodyFatLog).measured_body_fat_pct}%</p>
+                                                    </div>
+                                                    <div className="bg-white p-4 rounded-lg">
+                                                        <div className="w-full bg-gray-200 rounded-full h-3">
+                                                            <div
+                                                                className="bg-orange-500 h-3 rounded-full"
+                                                                style={{ width: `${Math.min((entry as BodyFatLog).measured_body_fat_pct * 2, 100)}%` }}
+                                                            />
                                                         </div>
+                                                    </div>
+
+                                                    {(entry as BodyFatLog).notes && (
+                                                    <div className="bg-white p-4 rounded-lg">
+                                                        <p className="text-xs font-bold text-gray-600 uppercase mb-2">Notes</p>
+                                                        <p className="text-sm text-gray-700">{(entry as BodyFatLog).notes}</p>
+                                                    </div>
                                                     )}
 
-                                                    {entry.type === 'bodyFat' && (
-                                                        <div>
-                                                            <p className="text-sm text-gray-700">
-                                                                <span className="font-semibold">Weight:</span> {entry.weight} lbs | <span className="font-semibold">Body Fat:</span> {entry.bodyFat}%
-                                                            </p>
-                                                        </div>
-                                                    )}
+                                                </>
+                                                )}
 
-                                                    {entry.type === 'exercise' && (
-                                                        <div>
-                                                            <p className="text-sm text-gray-700">
-                                                                <span className="font-semibold">Duration:</span> {entry.duration} minutes
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                            </div>
                                             )}
+
                                         </div>
-                                    ))}
-                                </div>
-                                
-                                <div className="flex items-center justify-between mt-8">
-                                    <p className="text-sm text-gray-600">Showing 1-6 of {totalEntries} entries</p>
-                                    <div className="flex items-center gap-2">
+                                        ))}
+
+                                    </div>
+                                    )}
+                                    
+                                    {totalPages > 0 && (
+                                    <div className="flex items-center justify-between">
                                         <button
-                                            onClick={() => {
-                                                if (pageWindow > 1) {
-                                                    setPageWindow(pageWindow - 1);
-                                                    setCurrentPage(pageWindow - 1);
-                                                }
-                                            }}
+                                            onClick={handlePreviousPage}
                                             disabled={pageWindow === 1}
-                                            className={`px-4 py-2 border border-gray-300 rounded-lg transition ${pageWindow === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}`}
+                                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Previous
                                         </button>
-                                        {Array.from({ length: 3 }, (_, i) => pageWindow + i).filter(page => page <= totalPages).map((page) => (
-                                            <button
-                                                key={page}
-                                                onClick={() => setCurrentPage(page)}
-                                                className={`w-10 h-10 rounded-lg transition ${
-                                                    currentPage === page
+                                        <div className="flex gap-2">
+
+                                            {pageNumbers.map((page) => (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => setCurrentPage(page)}
+                                                    className={`w-10 h-10 rounded-lg font-semibold transition ${
+                                                        currentPage === page
                                                         ? 'bg-pacewell-dark text-white'
                                                         : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                }`}
-                                            >
-                                                {page}
-                                            </button>
-                                        ))}
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            ))}
+                                            
+                                        </div>
                                         <button
-                                            onClick={() => {
-                                                if (pageWindow + 3 <= totalPages) {
-                                                    setPageWindow(pageWindow + 1);
-                                                    setCurrentPage(pageWindow + 3);
-                                                }
-                                            }}
-                                            disabled={pageWindow + 3 > totalPages}
-                                            className={`px-4 py-2 border border-gray-300 rounded-lg transition ${pageWindow + 3 > totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}`}
+                                            onClick={handleNextPage}
+                                            disabled={pageWindow * 3 >= totalPages}
+                                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Next
                                         </button>
                                     </div>
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-6">
-                                <div className="bg-white rounded-lg shadow p-6">
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Feed</h2>
-                                    <p className="text-gray-600 mb-6">Your recent accomplishments</p>
+                                    )}
 
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide">Recent Milestones</h3>
-                                        <button className="text-pacewell-dark hover:text-pacewell-darker font-semibold text-sm">
-                                            View Insights
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        {mockMilestones.map((milestone) => (
-                                            <div key={milestone.id} className="flex gap-4">
-                                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 text-pacewell-dark">
-                                                    {getMilestoneIcon(milestone.icon)}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="font-semibold text-gray-900">{milestone.title}</p>
-                                                    <p className="text-sm text-gray-600 mt-1">{milestone.description}</p>
-                                                    <p className="text-xs text-gray-500 mt-2 uppercase tracking-wide">{milestone.time}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
                                 
-                                <div className="bg-green-100 rounded-lg p-6 text-center">
-                                    <div className="w-12 h-12 rounded-full bg-green-200 flex items-center justify-center mx-auto mb-4 text-pacewell-dark">
-                                        <UtensilsCrossed size={24} />
+                                <div className="space-y-6">
+                                    <div className="bg-white rounded-lg shadow p-6">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-6">Recent Milestones</h3>
+                                        <div className="space-y-4">
+                                            <div className="pb-4 border-b border-gray-200 last:border-b-0">
+                                                <p className="text-sm font-semibold text-gray-900">Weekly Logging Streak</p>
+                                                <p className="text-xs text-gray-600 mt-1">You're on a 7-day streak!</p>
+                                                <p className="text-xs text-gray-500 mt-2">2h ago</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">Quick Log Suggestion</h3>
-                                    <p className="text-sm text-gray-700 mb-4">It's almost lunch time. Based on your goals, a high-protein salad would be perfect.</p>
-                                    <button className="w-full bg-pacewell-dark text-white font-semibold py-2 rounded-lg hover:bg-pacewell-darker transition">
-                                        Log Common Meal
-                                    </button>
+                                    
+                                    <div className="bg-pacewell-light rounded-lg p-6">
+                                        <h3 className="text-sm font-bold text-gray-900 mb-3">Quick Tip</h3>
+                                        <p className="text-sm text-gray-700">Logging consistently helps you track progress. Keep it up!</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </>
+                        )}
 
+                    </div>
+                    
                     <Footer />
                 </main>
             </div>

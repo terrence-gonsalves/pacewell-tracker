@@ -625,26 +625,37 @@ export default function PersonalGoalsPage() {
 
                                     {activeGoal ? (
                                     <div className="space-y-0">
-
+                                        <div className="flex gap-4 pb-6">
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-5 h-5 bg-white border-2 border-pacewell-dark rounded-full"></div>
+                                                <div className="w-0.5 h-12 bg-gray-300"></div>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-pacewell-dark">Today</p>
+                                                <p className="text-xs text-gray-600">Plan Commencement</p>
+                                            </div>
+                                        </div>
+                                        
                                         {activeGoal.projected_milestones.map((milestone, index) => (
                                         <div key={index} className={`flex gap-4 ${index < activeGoal.projected_milestones.length - 1 ? 'pb-6' : ''}`}>
                                             <div className="flex flex-col items-center">
                                                 <div className="w-5 h-5 bg-white border-2 border-pacewell-dark rounded-full"></div>
                                                 
                                                 {index < activeGoal.projected_milestones.length - 1 && (
-                                                    <div className="w-0.5 h-12 bg-gray-300"></div>
+                                                <div className="w-0.5 h-12 bg-gray-300"></div>
                                                 )}
 
                                             </div>
                                             <div>
-                                            <p className="text-sm font-bold text-pacewell-dark">{formatDate(milestone.date)}</p>
-                                            <p className="text-xs text-gray-600">{milestone.milestone_label}</p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Weight: {milestone.projected_weight} lbs | Body Fat: {milestone.projected_body_fat_percentage}%
-                                            </p>
+                                                <p className="text-sm font-bold text-pacewell-dark">{formatDate(milestone.date)}</p>
+                                                <p className="text-xs text-gray-600">{milestone.milestone_label}</p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Weight: {milestone.projected_weight} lbs | Body Fat: {milestone.projected_body_fat_percentage}%
+                                                </p>
                                             </div>
                                         </div>
                                         ))}
+
                                     </div>
                                     ) : (
                                     <div className="py-8 text-center">

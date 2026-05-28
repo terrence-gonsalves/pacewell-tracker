@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // routes that don't require authentication
-const publicRoutes = ['/api/auth/signup', '/api/auth/login', '/api/personal-goals'];
+const publicRoutes = ['/api/auth/signup', '/api/auth/login', '/api/personal-goals', '/api/history-logs'];
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;

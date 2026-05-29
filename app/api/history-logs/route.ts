@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             {
                 global: {
-                headers: {
-                    authorization: `Bearer ${token}`,
-                },
+                    headers: {
+                        authorization: `Bearer ${token}`,
+                    },
                 },
             }
         );
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
             .from('body_fat_logs')
             .select('*')
             .gte('date', startDate)
-            .order('date', { ascending: false });
+            .order('date', { ascending: false })
 
         if (bodyFatError && bodyFatError.code !== 'PGRST116') {
             console.error('Error fetching body fat logs:', bodyFatError);
@@ -126,8 +126,8 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // combine and format all logs
-        const allLogs: LogEntry[] = [];
+        // Combine and format all logs
+        const allLogs: LogEntry[] = []
 
         // add meal logs
         if (mealLogs && Array.isArray(mealLogs)) {
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
                     food_description: log.food_description,
                     created_at: log.created_at,
                 });
-            })
+            });
         }
 
         // add weight entries
@@ -164,10 +164,10 @@ export async function GET(request: NextRequest) {
                     notes: log.notes,
                     created_at: log.created_at,
                 });
-            })
+            });
         }
 
-        // Add body fat logs
+        // add body fat logs
         if (bodyFatLogs && Array.isArray(bodyFatLogs)) {
             bodyFatLogs.forEach((log) => {
                 allLogs.push({
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
                     notes: log.notes,
                     created_at: log.created_at,
                 });
-            })
+            });
         }
 
         // sort all logs by date (newest first)
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
             const dateB = new Date(b.date).getTime();
 
             return dateB - dateA;
-        })
+        });
 
         return NextResponse.json(
             { data: allLogs },

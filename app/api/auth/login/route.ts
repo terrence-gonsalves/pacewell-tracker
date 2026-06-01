@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { createResponse } from '@/lib/utils';
-import { getUserProfile } from '@/lib/utils';
+import { createResponse, getUserProfile } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
     try {
@@ -49,6 +48,7 @@ export async function POST(request: NextRequest) {
             createResponse(true, {
                 session: {
                     access_token: authData.session?.access_token,
+                    refresh_token: authData.session?.refresh_token,
                     user_id: authData.user.id,
                 },
                 user: {

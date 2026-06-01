@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signup = async (email: string, password: string, biometrics: any) => {
         setIsLoading(true);
-        
+
         try {
             const response = await fetch('/api/auth/signup', {
                 method: 'POST',
@@ -62,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const verifyEmail = async (email: string, code: string) => {
         setIsLoading(true);
-
         try {
             const response = await fetch('/api/auth/verify-email', {
                 method: 'POST',
@@ -96,19 +95,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 throw new Error(data.error || 'Login failed');
             }
 
-            const data = await response.json();
+            const response_data = await response.json();
+
+            // DEBUG: log the full response structure
+            console.log('Login response:', response_data);
+            console.log('Response keys:', Object.keys(response_data));
+
+            // handle nested response from createResponse() wrapper, the actual data might be in response_data.data
+            const data = response_data.data || response_data;
+
+            console.log('Data to use:', data);
+            console.log('Token:', data.token || data.access_token);
+            console.log('Refresh token:', data.refresh_token);
+            console.log('User:', data.user);
 
             // store user data and tokens
-            localStorage.setItem('pacewell_token', data.token || data.access_token);
+            const accessToken = data.token || data.access_token;
+            const refreshToken = data.refresh_token;
+            const user = data.user;
 
-            // store refresh token if available for token refresh
-            if (data.refresh_token) {
-                localStorage.setItem('pacewell_refresh_token', data.refresh_token);
+            if (!accessToken || !user) {
+                throw new Error('Missing token or user data in login response');
             }
 
-            localStorage.setItem('pacewell_user', JSON.stringify(data.user));
+            localStorage.setItem('pacewell_token', accessToken);
 
-            setUser(data.user);
+            // store refresh token if available for token refresh
+            if (refreshToken && refreshToken !== 'undefined') {
+                localStorage.setItem('pacewell_refresh_token', refreshToken);
+            }
+
+            localStorage.setItem('pacewell_user', JSON.stringify(user));
+
+            setUser(user);
         } finally {
             setIsLoading(false);
         }
@@ -118,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('pacewell_token');
         localStorage.removeItem('pacewell_refresh_token');
         localStorage.removeItem('pacewell_user');
+
         setUser(null);
     };
 
@@ -134,5 +154,6 @@ export function useAuth() {
     if (!context) {
         throw new Error('useAuth must be used within AuthProvider');
     }
+    
     return context;
 }

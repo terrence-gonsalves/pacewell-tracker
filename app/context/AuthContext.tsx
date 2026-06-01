@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const verifyEmail = async (email: string, code: string) => {
         setIsLoading(true);
+
         try {
             const response = await fetch('/api/auth/verify-email', {
                 method: 'POST',
@@ -97,17 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const response_data = await response.json();
 
-            // DEBUG: log the full response structure
-            console.log('Login response:', response_data);
-            console.log('Response keys:', Object.keys(response_data));
-
-            // handle nested response from createResponse() wrapper, the actual data might be in response_data.data
-            const data = response_data.data || response_data;
-
-            console.log('Data to use:', data);
-            console.log('Token:', data.token || data.access_token);
-            console.log('Refresh token:', data.refresh_token);
-            console.log('User:', data.user);
+            // extract data from nested response structure: response.body.data
+            const data = response_data.body?.data || response_data.data || response_data;
 
             // store user data and tokens
             const accessToken = data.token || data.access_token;

@@ -43,14 +43,11 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // return success with session and user data
+        // return success with tokens at top level (not nested in session)
         return NextResponse.json(
             createResponse(true, {
-                session: {
-                    access_token: authData.session?.access_token,
-                    refresh_token: authData.session?.refresh_token,
-                    user_id: authData.user.id,
-                },
+                token: authData.session?.access_token,           // Top level access token
+                refresh_token: authData.session?.refresh_token,  // Top level refresh token
                 user: {
                     id: authData.user.id,
                     email: authData.user.email,

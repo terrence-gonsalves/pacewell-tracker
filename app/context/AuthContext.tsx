@@ -27,19 +27,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const savedUser = localStorage.getItem('pacewell_user');
 
-        if (savedUser) {
+        if (savedUser && savedUser !== 'undefined') {
             try {
                 setUser(JSON.parse(savedUser));
             } catch (error) {
                 console.error('Error parsing saved user:', error);
                 localStorage.removeItem('pacewell_user');
+                localStorage.removeItem('pacewell_token');
+                localStorage.removeItem('pacewell_refresh_token');
             }
         }
     }, []);
 
     const signup = async (email: string, password: string, biometrics: any) => {
         setIsLoading(true);
-
+        
         try {
             const response = await fetch('/api/auth/signup', {
                 method: 'POST',
@@ -116,7 +118,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('pacewell_token');
         localStorage.removeItem('pacewell_refresh_token');
         localStorage.removeItem('pacewell_user');
-
         setUser(null);
     };
 
@@ -133,6 +134,5 @@ export function useAuth() {
     if (!context) {
         throw new Error('useAuth must be used within AuthProvider');
     }
-    
     return context;
 }

@@ -44,13 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const response = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, ...biometrics }),
+                body: JSON.stringify({ email, password, biometrics }),
             });
 
             if (!response.ok) {
                 const data = await response.json();
-                console.log('Signup error details:', data);
-
                 throw new Error(data.error || 'Signup failed');
             }
 
@@ -98,11 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             const data = await response.json();
 
-            // store user data and token
-            localStorage.setItem('pacewell_token', data.body.data.session.access_token);
-            localStorage.setItem('pacewell_user', JSON.stringify(data.body.data.user));
+            // store user data and tokens
+            localStorage.setItem('pacewell_token', data.token || data.access_token);
 
-            setUser(data.body.data.user);
+            // store refresh token if available for token refresh
+            if (data.refresh_token) {
+                localStorage.setItem('pacewell_refresh_token', data.refresh_token);
+            }
+
+            localStorage.setItem('pacewell_user', JSON.stringify(data.user));
+
+            setUser(data.user);
         } finally {
             setIsLoading(false);
         }
@@ -110,7 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         localStorage.removeItem('pacewell_token');
+        localStorage.removeItem('pacewell_refresh_token');
         localStorage.removeItem('pacewell_user');
+
         setUser(null);
     };
 

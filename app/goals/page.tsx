@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { fetchWithAuth } from '@/lib/fetch-with-auth';
 import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Sidebar from '../components/Sidebar';
@@ -108,20 +109,9 @@ export default function PersonalGoalsPage() {
             setIsLoadingGoal(true);
             setError(null);
 
-            const token = localStorage.getItem('pacewell_token');
-
-            if (!token) {
-                setError('No active session. Please log in again.');
-                
-                return;
-            }
-
-            const response = await fetch('/api/personal-goals', {
+            const response = await fetchWithAuth('/api/personal-goals', {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json', },
             });
 
             const data = await response.json();
@@ -180,20 +170,9 @@ export default function PersonalGoalsPage() {
             setError(null);
             setSuccessMessage(null);
 
-            const token = localStorage.getItem('pacewell_token');
-
-            if (!token) {
-                setError('No active session. Please log in again.');
-                
-                return;
-            }
-
-            const response = await fetch('/api/personal-goals', {
+            const response = await fetchWithAuth('/api/personal-goals', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify({
                     goal_strategy: goalStrategy,
                     target_weight: bodyTargets.targetWeight,

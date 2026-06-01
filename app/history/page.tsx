@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { fetchWithAuth } from '@/lib/fetch-with-auth';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
@@ -94,19 +95,9 @@ export default function HistoryLogsPage() {
             setIsLoading(true);
             setError(null);
 
-            const token = localStorage.getItem('pacewell_token');
-
-            if (!token) {
-                setError('No active session. Please log in again.');
-                return;
-            }
-
-            const response = await fetch('/api/history-logs', {
+            const response = await fetchWithAuth('/api/history-logs', {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json', },
             });
 
             const data = await response.json();
@@ -275,12 +266,6 @@ export default function HistoryLogsPage() {
 
         try {
             setIsSaving(true);
-            const token = localStorage.getItem('pacewell_token');
-
-            if (!token) {
-                setError('Session expired. Please log in again.');
-                return;
-            }
 
             const tableMap: { [key: string]: string } = {
                 'Meal': 'macro_logs',
@@ -288,12 +273,9 @@ export default function HistoryLogsPage() {
                 'Body Fat': 'body_fat_logs',
             };
 
-            const response = await fetch(`/api/history-logs/${editingLog.id}`, {
+            const response = await fetchWithAuth(`/api/history-logs/${editingLog.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify({
                     table: tableMap[editingLog.type],
                     data: editFormData,
@@ -324,12 +306,6 @@ export default function HistoryLogsPage() {
 
         try {
             setIsDeleting(true);
-            const token = localStorage.getItem('pacewell_token');
-
-            if (!token) {
-                setError('Session expired. Please log in again.');
-                return;
-            }
 
             const tableMap: { [key: string]: string } = {
                 'Meal': 'macro_logs',
@@ -337,12 +313,9 @@ export default function HistoryLogsPage() {
                 'Body Fat': 'body_fat_logs',
             };
 
-            const response = await fetch(`/api/history-logs/${deleteConfirm.id}`, {
+            const response = await fetchWithAuth(`/api/history-logs/${deleteConfirm.id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify({
                     table: tableMap[deleteConfirm.type],
                 }),

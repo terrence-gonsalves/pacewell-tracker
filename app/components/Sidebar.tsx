@@ -19,8 +19,8 @@ export default function Sidebar() {
         { icon: Grid3x3, label: 'Dashboard', href: '/dashboard' },
         { icon: UtensilsCrossed, label: 'Meals Tracker', href: '/meals' },
         { icon: Scale, label: 'Body Metrics', href: '/body-metrics' },
-        { icon: Target, label: 'Personal Goals', href: '/goals' },
-        { icon: TrendingUp, label: 'History & Logs', href: '/history' },
+        { icon: Target, label: 'Personal Goals', href: '/personal-goals' },
+        { icon: TrendingUp, label: 'History & Logs', href: '/history-logs' },
     ];
 
     return (

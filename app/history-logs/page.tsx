@@ -80,7 +80,6 @@ export default function HistoryLogsPage() {
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageWindow, setPageWindow] = useState(1);
     const [metrics, setMetrics] = useState<Metrics | null>(null);
 
     // modal states
@@ -378,20 +377,19 @@ export default function HistoryLogsPage() {
     };
 
     const handlePreviousPage = () => {
-        if (pageWindow > 1) {
-            setPageWindow(pageWindow - 1);
-            setCurrentPage((pageWindow - 1) * 3);
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
         }
     };
 
     const handleNextPage = () => {
-        if (pageWindow * 3 < totalPages) {
-            setPageWindow(pageWindow + 1);
-            setCurrentPage(pageWindow * 3 + 1);
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
         }
     };
 
     const getPageNumbers = () => {
+        const pageWindow = Math.ceil(currentPage / 3);
         const start = (pageWindow - 1) * 3 + 1;
         const end = Math.min(start + 2, totalPages);
         const pages = [];
@@ -399,7 +397,7 @@ export default function HistoryLogsPage() {
         for (let i = start; i <= end; i++) {
             pages.push(i);
         }
-        
+
         return pages;
     };
 
@@ -503,7 +501,6 @@ export default function HistoryLogsPage() {
                             onChange={(e) => {
                               setSearchTerm(e.target.value);
                               setCurrentPage(1);
-                              setPageWindow(1);
                             }}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
                           />
@@ -518,7 +515,6 @@ export default function HistoryLogsPage() {
                             onClick={() => {
                               setSelectedFilter(filter);
                               setCurrentPage(1);
-                              setPageWindow(1);
                             }}
                             className={`px-4 py-2 rounded-lg font-semibold transition ${
                               selectedFilter === filter
@@ -717,7 +713,7 @@ export default function HistoryLogsPage() {
                       <div className="flex items-center justify-between">
                         <button
                           onClick={handlePreviousPage}
-                          disabled={pageWindow === 1}
+                          disabled={currentPage === 1}
                           className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Previous
@@ -739,7 +735,7 @@ export default function HistoryLogsPage() {
                         </div>
                         <button
                           onClick={handleNextPage}
-                          disabled={pageWindow * 3 >= totalPages}
+                          disabled={currentPage === totalPages}
                           className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Next

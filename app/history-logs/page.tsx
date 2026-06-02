@@ -223,7 +223,7 @@ export default function HistoryLogsPage() {
                             entry.meal_type.toLowerCase().includes(searchTerm.toLowerCase());
                 }
 
-                return true;
+                return false;
             });
         }
 

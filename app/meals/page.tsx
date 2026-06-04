@@ -277,10 +277,6 @@ export default function MealsTrackerPage() {
                                         <Search size={20} />
                                         <span>Search Database</span>
                                     </button>
-                                    <button className="flex items-center gap-2 px-6 py-2 bg-pacewell-dark text-white rounded-lg hover:bg-pacewell-darker transition font-semibold">
-                                        <Plus size={20} />
-                                        <span>Custom Item</span>
-                                    </button>
                                 </div>
 
                                 <div className="bg-white rounded-lg shadow p-8">
@@ -428,7 +424,7 @@ export default function MealsTrackerPage() {
                                             <div className="w-6 h-6 bg-pacewell-dark rounded flex items-center justify-center">
                                                 <Star size={16} className="text-white" />
                                             </div>
-                                            <h2 className="text-lg font-bold text-gray-900">Quick Add: High-Protein Favorites</h2>
+                                            <h2 className="text-lg font-bold text-gray-900">Quick Add: Favorites</h2>
                                         </div>
                                         <button className="text-pacewell-dark hover:text-pacewell-darker font-semibold">
                                             View Library
@@ -504,10 +500,6 @@ export default function MealsTrackerPage() {
                                             <p className="text-xs text-gray-600">{Math.max(0, dailyData.targets.fat_g - dailyData.today.fat_g)}g left</p>
                                         </div>
                                     </div>
-
-                                    <button className="w-full mt-4 text-pacewell-dark hover:text-pacewell-darker font-semibold text-sm">
-                                        Detailed Nutrients Analysis →
-                                    </button>
                                 </div>
 
                                 <div>

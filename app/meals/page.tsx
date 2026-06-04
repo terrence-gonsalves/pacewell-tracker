@@ -3,11 +3,15 @@
  * Track macros to hit daily 40+ vitality goals
  *
  * UPDATES:
- * - Uses fetchWithAuth for automatic token refresh
- * - Loads daily targets from personal goals
- * - Logs meals to database
- * - Loads user favorites from food_favorites table
- * - Real-time progress calculation
+ * - Error messages clear on Clear button
+ * - Status badge shows "Optimal" (85-100%), "Exceeded" (100%+), or hidden (<85%)
+ * - Energy bar turns red when over 100%
+ * - Search field for previously logged meals
+ * - "Save to Favorites" checkbox
+ * - Quick Adds limited to 12 items with "View Library" modal
+ * - Recent Activity limited to 6 items with "View Full Journal"
+ * - Removed "Custom Item" and "Detailed Nutrients Analysis" buttons
+ * - All macro fields required
  */
 
 "use client";
@@ -26,7 +30,8 @@ import {
     Droplet,
     Star,
     UtensilsCrossed,
-    AlertCircle
+    AlertCircle,
+    X
 } from 'lucide-react';
 
 interface Meal {
@@ -75,6 +80,9 @@ export default function MealsTrackerPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [showLibraryModal, setShowLibraryModal] = useState(false);
+    const [showFullJournalModal, setShowFullJournalModal] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [selectedMealTiming, setSelectedMealTiming] = useState('breakfast');
     const [formData, setFormData] = useState({
@@ -84,6 +92,7 @@ export default function MealsTrackerPage() {
         carbs: '',
         fat: '',
     });
+    const [saveToFavorites, setSaveToFavorites] = useState(false);
 
     // fetch daily data and favorites
     const fetchData = useCallback(async () => {
@@ -115,6 +124,7 @@ export default function MealsTrackerPage() {
                 setFavorites([]);
             } else {
                 const favoritesData = await favoritesResponse.json();
+
                 setFavorites(favoritesData.data || []);
             }
         } catch (err) {
@@ -137,8 +147,11 @@ export default function MealsTrackerPage() {
     };
 
     const handleLogMeal = async () => {
-        if (!formData.foodName || !formData.calories) {
-            setError('Please enter food name and calories');
+
+        // validate all required fields
+        if (!formData.foodName || !formData.calories || !formData.protein || !formData.carbs || !formData.fat) {
+            setError('Please fill in all fields (Food Name, Calories, Protein, Carbs, Fat)');
+
             return;
         }
 
@@ -147,24 +160,40 @@ export default function MealsTrackerPage() {
             setError(null);
 
             const response = await fetchWithAuth('/api/meals', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        meal_type: selectedMealTiming,
-                        food_description: formData.foodName,
-                        calories: parseInt(formData.calories),
-                        protein_g: parseFloat(formData.protein) || 0,
-                        carbs_g: parseFloat(formData.carbs) || 0,
-                        fat_g: parseFloat(formData.fat) || 0,
-                    }),
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    meal_type: selectedMealTiming,
+                    food_description: formData.foodName,
+                    calories: parseInt(formData.calories),
+                    protein_g: parseFloat(formData.protein),
+                    carbs_g: parseFloat(formData.carbs),
+                    fat_g: parseFloat(formData.fat),
+                }),
             });
 
-            if (!response.ok) {
-                    throw new Error('Failed to log meal');
-            }
+          if (!response.ok) {
+                throw new Error('Failed to log meal');
+          }
 
-            // reset form and refresh data
-            setFormData({ foodName: '', calories: '', protein: '', carbs: '', fat: '' });
+          // if user selected "Save to Favorites", add it
+          if (saveToFavorites) {
+                await fetchWithAuth('/api/meals/favorites', {
+                method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: formData.foodName,
+                        calories: parseInt(formData.calories),
+                        protein_g: parseFloat(formData.protein),
+                        carbs_g: parseFloat(formData.carbs),
+                        fat_g: parseFloat(formData.fat),
+                    }),
+                });
+          }
+
+          // reset form and refresh data
+            handleClear();
+            setSaveToFavorites(false);
 
             await fetchData();
         } catch (err) {
@@ -185,10 +214,34 @@ export default function MealsTrackerPage() {
             carbs: favorite.carbs_g.toString(),
             fat: favorite.fat_g.toString(),
         });
+        setError(null);
+        setSaveToFavorites(false);
     };
 
     const handleClear = () => {
         setFormData({ foodName: '', calories: '', protein: '', carbs: '', fat: '' });
+        setError(null);
+        setSaveToFavorites(false);
+    };
+
+    const getStatusBadge = (calories: number, target: number) => {
+        const percentage = (calories / target) * 100;
+
+        if (percentage >= 85 && percentage <= 100) {
+            return { label: 'Optimal', bgColor: 'bg-green-100', textColor: 'text-green-800' };
+        } else if (percentage > 100) {
+            return { label: 'Exceeded', bgColor: 'bg-red-100', textColor: 'text-red-800' };
+        }
+
+        return null;
+    };
+
+    const getEnergyBarColor = (percentage: number) => {
+        if (percentage > 100) {
+            return 'bg-red-600';
+        }
+
+        return 'bg-pacewell-dark';
     };
 
     if (isLoading) {
@@ -235,18 +288,19 @@ export default function MealsTrackerPage() {
 
     const caloriesRemaining = Math.max(0, dailyData.targets.calories - dailyData.today.calories);
     const energyPercent = (dailyData.today.calories / dailyData.targets.calories) * 100;
+    const statusBadge = getStatusBadge(dailyData.today.calories, dailyData.targets.calories);
 
-    // use favorites if available, otherwise use quick add defaults
-    const displayFavorites = favorites.length > 0 ? favorites : [
-        { id: '1', name: 'Greek Yogurt (200g)', calories: 120, protein_g: 18, carbs_g: 8, fat_g: 4 },
-        { id: '2', name: 'Grilled Salmon', calories: 240, protein_g: 28, carbs_g: 0, fat_g: 14 },
-        { id: '3', name: 'Chicken Breast', calories: 165, protein_g: 31, carbs_g: 0, fat_g: 3.6 },
-        { id: '4', name: 'Whey Shake', calories: 150, protein_g: 25, carbs_g: 5, fat_g: 2 },
-        { id: '5', name: 'Boiled Eggs (2)', calories: 140, protein_g: 12, carbs_g: 1, fat_g: 10 },
-        { id: '6', name: 'Mixed Nuts (30g)', calories: 180, protein_g: 5, carbs_g: 6, fat_g: 16 },
-        { id: '7', name: 'Quinoa Bowl', calories: 220, protein_g: 8, carbs_g: 39, fat_g: 4 },
-        { id: '8', name: 'Skyr (Natural)', calories: 110, protein_g: 19, carbs_g: 4, fat_g: 0.5 },
-    ];
+    // display only database favorites (max 12 for quick add)
+    const displayFavorites = favorites.slice(0, 12);
+
+    // filter meals by search term
+    const filteredMeals = dailyData.meals.filter(meal =>
+        meal.food_description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // recent Activity limited to 6 items
+    const recentActivityMeals = dailyData.meals.slice(0, 6);
+    const hasMoreMeals = dailyData.meals.length > 6;
 
     return (
         <ProtectedRoute>
@@ -262,21 +316,28 @@ export default function MealsTrackerPage() {
                     </header>
 
                     <div className="p-8">
-
                         {error && (
-                        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
-                            <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-red-800">{error}</p>
-                        </div>
+                          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3 items-start">
+                            <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                            <div className="flex-1">
+                              <p className="text-red-800">{error}</p>
+                            </div>
+                          </div>
                         )}
 
                         <div className="grid grid-cols-3 gap-8">
                             <div className="col-span-2 space-y-8">
                                 <div className="flex gap-4">
-                                    <button className="flex items-center gap-2 px-6 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium">
-                                        <Search size={20} />
-                                        <span>Search Database</span>
-                                    </button>
+                                    <div className="flex-1 relative">
+                                        <Search size={20} className="absolute left-3 top-3 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search your meals..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pacewell-dark focus:border-transparent"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="bg-white rounded-lg shadow p-8">
@@ -290,21 +351,19 @@ export default function MealsTrackerPage() {
                                     <div className="mb-6">
                                         <label className="block text-sm font-semibold text-gray-900 mb-3">Meal Timing</label>
                                         <div className="flex gap-3 border-b border-gray-200 bg-gray-100 p-1 rounded-lg w-fit">
-
                                             {mealTimings.map((timing) => (
-                                            <button
-                                                key={timing}
-                                                onClick={() => setSelectedMealTiming(timing)}
-                                                className={`px-4 py-2 rounded-lg transition font-medium capitalize ${
-                                                    selectedMealTiming === timing
-                                                        ? 'bg-white text-pacewell-dark'
-                                                        : 'bg-gray-100 text-gray-600 hover:text-gray-700'
-                                                }`}
-                                            >
-                                                {timing}
-                                            </button>
+                                                <button
+                                                    key={timing}
+                                                    onClick={() => setSelectedMealTiming(timing)}
+                                                    className={`px-4 py-2 rounded-lg transition font-medium capitalize ${
+                                                        selectedMealTiming === timing
+                                                            ? 'bg-white text-pacewell-dark'
+                                                            : 'bg-gray-100 text-gray-600 hover:text-gray-700'
+                                                    }`}
+                                                >
+                                                    {timing}
+                                                </button>
                                             ))}
-
                                         </div>
                                     </div>
 
@@ -401,6 +460,19 @@ export default function MealsTrackerPage() {
                                         </div>
                                     </div>
 
+                                    <div className="mb-6 flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="saveToFavorites"
+                                            checked={saveToFavorites}
+                                            onChange={(e) => setSaveToFavorites(e.target.checked)}
+                                            className="w-4 h-4 accent-pacewell-dark rounded"
+                                        />
+                                        <label htmlFor="saveToFavorites" className="text-sm font-semibold text-gray-700">
+                                            Save to Favorites
+                                        </label>
+                                    </div>
+
                                     <div className="flex gap-4 justify-end">
                                         <button
                                             onClick={handleClear}
@@ -424,33 +496,42 @@ export default function MealsTrackerPage() {
                                             <div className="w-6 h-6 bg-pacewell-dark rounded flex items-center justify-center">
                                                 <Star size={16} className="text-white" />
                                             </div>
-                                            <h2 className="text-lg font-bold text-gray-900">Quick Add: Favorites</h2>
+                                            <h2 className="text-lg font-bold text-gray-900">Quick Add: High-Protein Favorites</h2>
                                         </div>
-                                        <button className="text-pacewell-dark hover:text-pacewell-darker font-semibold">
-                                            View Library
-                                        </button>
+                                        {favorites.length > 12 && (
+                                          <button
+                                              onClick={() => setShowLibraryModal(true)}
+                                              className="text-pacewell-dark hover:text-pacewell-darker font-semibold"
+                                          >
+                                              View Library
+                                          </button>
+                                        )}
                                     </div>
-                                    <div className="grid grid-cols-4 gap-4">
-
+                                    {displayFavorites.length > 0 ? (
+                                      <div className="grid grid-cols-4 gap-4">
                                         {displayFavorites.map((favorite) => (
-                                        <button
-                                            key={favorite.id}
-                                            onClick={() => handleAddQuickFavorite(favorite)}
-                                            className="bg-white rounded-lg shadow p-4 hover:shadow-md transition flex flex-col"
-                                        >
-                                            <div className="flex justify-start mb-3">
-                                                <div className="w-8 h-8 bg-pacewell-dark rounded flex items-center justify-center">
-                                                    <UtensilsCrossed size={18} className="text-white" />
+                                            <button
+                                                key={favorite.id}
+                                                onClick={() => handleAddQuickFavorite(favorite)}
+                                                className="bg-white rounded-lg shadow p-4 hover:shadow-md transition flex flex-col"
+                                            >
+                                                <div className="flex justify-start mb-3">
+                                                    <div className="w-8 h-8 bg-pacewell-dark rounded flex items-center justify-center">
+                                                        <UtensilsCrossed size={18} className="text-white" />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <p className="font-semibold text-gray-900 text-sm mb-3 text-left">{favorite.name}</p>
-                                            <div className="text-xs text-gray-600 text-left">
-                                                <p className="mb-1">{favorite.calories} kcal  {favorite.protein_g}g Protein</p>
-                                            </div>
-                                        </button>
+                                                <p className="font-semibold text-gray-900 text-sm mb-3 text-left">{favorite.name}</p>
+                                                <div className="text-xs text-gray-600 text-left">
+                                                    <p className="mb-1">{favorite.calories} kcal  {favorite.protein_g}g Protein</p>
+                                                </div>
+                                            </button>
                                         ))}
-
                                     </div>
+                                    ) : (
+                                      <div className="bg-gray-50 rounded-lg p-8 text-center">
+                                        <p className="text-gray-600">No favorites yet. Check the "Save to Favorites" box when logging a meal to add it here!</p>
+                                      </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -458,9 +539,11 @@ export default function MealsTrackerPage() {
                                 <div className="bg-white rounded-lg shadow p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-sm font-bold text-gray-700 uppercase">Today's Progress</h3>
-                                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
-                                            Optimal
-                                        </span>
+                                        {statusBadge && (
+                                          <span className={`px-2 py-1 ${statusBadge.bgColor} ${statusBadge.textColor} text-xs font-semibold rounded`}>
+                                            {statusBadge.label}
+                                          </span>
+                                        )}
                                     </div>
 
                                     <div className="text-center mb-4">
@@ -473,11 +556,13 @@ export default function MealsTrackerPage() {
                                     <div className="mb-4">
                                         <div className="flex justify-between text-xs font-semibold text-gray-600 mb-2">
                                             <span>Energy Target</span>
-                                            <span>{energyPercent.toFixed(0)}%</span>
+                                            <span className={energyPercent > 100 ? 'text-red-600 font-bold' : ''}>
+                                              {energyPercent.toFixed(0)}%
+                                            </span>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-2">
                                             <div
-                                                className="bg-pacewell-dark h-2 rounded-full"
+                                                className={`${getEnergyBarColor(energyPercent)} h-2 rounded-full`}
                                                 style={{ width: `${Math.min(energyPercent, 100)}%` }}
                                             ></div>
                                         </div>
@@ -503,41 +588,112 @@ export default function MealsTrackerPage() {
                                 </div>
 
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-700 uppercase mb-4">Recent Activity</h3>
-                                    <div className="space-y-3">
-
-                                        {dailyData.meals.map((meal) => (
-                                        <div key={meal.id} className="bg-white rounded-lg shadow p-4 flex gap-3">
-                                            <div className="w-8 h-8 bg-pacewell-dark rounded flex items-center justify-center flex-shrink-0">
-                                                <UtensilsCrossed size={18} className="text-white" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <p className="font-semibold text-gray-900 text-base">{meal.food_description}</p>
-                                                    <p className="text-sm text-gray-600">{meal.calories} kcal</p>
-                                                </div>
-                                                <div className="flex justify-between text-xs text-gray-600 mb-2">
-                                                    <span>Protein: {meal.protein_g}g</span>
-                                                    <span>Carbs: {meal.carbs_g}g</span>
-                                                    <span>Fat: {meal.fat_g}g</span>
-                                                </div>
-                                                <p className="text-xs font-semibold text-pacewell-dark capitalize">{meal.meal_type}</p>
-                                            </div>
-                                        </div>
-                                        ))}
-
-                                        {dailyData.meals.length === 0 && (
-                                        <p className="text-sm text-gray-600 text-center py-4">No meals logged yet. Start by logging your first meal!</p>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-sm font-bold text-gray-700 uppercase">Recent Activity</h3>
+                                        {hasMoreMeals && (
+                                          <button
+                                              onClick={() => setShowFullJournalModal(true)}
+                                              className="text-pacewell-dark hover:text-pacewell-darker font-semibold text-sm"
+                                          >
+                                              View Full Journal
+                                          </button>
                                         )}
-
                                     </div>
-                                    <button className="w-full mt-4 text-center py-2 text-pacewell-dark hover:text-pacewell-darker font-semibold text-sm">
-                                        View Full Journal
-                                    </button>
+                                    <div className="space-y-3">
+                                        {recentActivityMeals.map((meal) => (
+                                            <div key={meal.id} className="bg-white rounded-lg shadow p-4 flex gap-3">
+                                                <div className="w-8 h-8 bg-pacewell-dark rounded flex items-center justify-center flex-shrink-0">
+                                                    <UtensilsCrossed size={18} className="text-white" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <p className="font-semibold text-gray-900 text-base">{meal.food_description}</p>
+                                                        <p className="text-sm text-gray-600">{meal.calories} kcal</p>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs text-gray-600 mb-2">
+                                                        <span>Protein: {meal.protein_g}g</span>
+                                                        <span>Carbs: {meal.carbs_g}g</span>
+                                                        <span>Fat: {meal.fat_g}g</span>
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-pacewell-dark capitalize">{meal.meal_type}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {recentActivityMeals.length === 0 && (
+                                          <p className="text-sm text-gray-600 text-center py-4">No meals logged yet. Start by logging your first meal!</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
+                    {showLibraryModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                                <h2 className="text-2xl font-bold text-gray-900">Food Library</h2>
+                                <button
+                                    onClick={() => setShowLibraryModal(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <div className="p-6 grid grid-cols-2 gap-4">
+
+                                {favorites.map((favorite) => (
+                                <button
+                                    key={favorite.id}
+                                    onClick={() => {
+                                        handleAddQuickFavorite(favorite);
+                                        setShowLibraryModal(false);
+                                    }}
+                                    className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition text-left"
+                                >
+                                    <p className="font-semibold text-gray-900 mb-2">{favorite.name}</p>
+                                    <p className="text-sm text-gray-600">{favorite.calories} kcal • {favorite.protein_g}g protein</p>
+                                </button>
+                                ))}
+
+                            </div>
+                        </div>
+                    </div>
+                    )}
+                    
+                    {showFullJournalModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                                <h2 className="text-2xl font-bold text-gray-900">Full Journal</h2>
+                                <button
+                                    onClick={() => setShowFullJournalModal(false)}
+                                    className="p-2 hover:bg-gray-100 rounded-lg"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                          <div className="p-6 space-y-3">
+
+                                {dailyData.meals.map((meal) => (
+                                <div key={meal.id} className="bg-gray-50 rounded-lg p-4">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <p className="font-semibold text-gray-900">{meal.food_description}</p>
+                                        <p className="text-sm text-gray-600">{meal.calories} kcal</p>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-600 mb-2">
+                                        <span>Protein: {meal.protein_g}g</span>
+                                        <span>Carbs: {meal.carbs_g}g</span>
+                                        <span>Fat: {meal.fat_g}g</span>
+                                    </div>
+                                    <p className="text-xs font-semibold text-pacewell-dark capitalize">{meal.meal_type}</p>
+                                </div>
+                                ))}
+
+                          </div>
+                        </div>
+                    </div>
+                    )}
 
                     <Footer />
                 </main>

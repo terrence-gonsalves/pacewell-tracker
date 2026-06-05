@@ -5,8 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';;
+import { createClient } from '@supabase/supabase-js';
 import { jwtDecode } from 'jwt-decode';
+import { lbsToKg, bodyFatPercentageToDecimal } from '../../utils/unit-utils';
 
 interface WeightEntry {
     id: string
@@ -144,10 +145,10 @@ export async function POST(request: NextRequest) {
         }
 
         // convert weight to kg if needed
-        const weightKg = unit === 'imperial' ? convertLbsToKg(parseFloat(weight)) : parseFloat(weight);
+        const weightKg = unit === 'imperial' ? lbsToKg(parseFloat(weight)) : parseFloat(weight);
 
         // convert body fat from percentage to decimal if provided
-        const bodyFatDecimal = bodyFat ? parseFloat(bodyFat) / 100 : null;
+        const bodyFatDecimal = bodyFat ? bodyFatPercentageToDecimal(parseFloat(bodyFat)) : null;
 
         // create authenticated Supabase client
         const supabaseAuth = createClient(
@@ -223,11 +224,6 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// helper functions
-function convertLbsToKg(lbs: number): number {
-    return lbs / 2.20462;
-}
-
 function calculateMetrics(
     entries: WeightEntry[],
     goal: any,
@@ -278,7 +274,7 @@ function calculateMetrics(
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-        })
+        });
     }
 
     return {
